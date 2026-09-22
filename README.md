@@ -77,7 +77,7 @@ GitHub Actions 会在提交时运行 `python3 tools/validate_skill.py .`。该�
 
 ## 安装
 
-仓库地址：<https://github.com/qqhkx2027/qiuqiu-cover-prompt>
+仓库地址：<https://github.com/wangsiji/qiuqiu-cover-prompt>
 
 ## 许可
 
