@@ -40,6 +40,26 @@ python3 tools/validate_skill.py .
 3. 先看 `主题判断 + 3 个钩子 + 推荐构图`，确认文案后再明确说“生成”。
 4. 出图默认走 Lovart（`set-mode --unlimited` 免费队列跑通，详见 [references/lovart-channel.md](references/lovart-channel.md)）。
 
+## 在产案例
+
+「秋秋很开心」公众号近几个月用本 Skill 出封面的文章（真实微信链接，摘自内容资产库）：
+
+| 日期 | 文章 | 链接 |
+|---|---|---|
+| 2026-09-22 | 我的100件长期好物：头发护理神器来啦！ | https://mp.weixin.qq.com/s/oQ3wi4pJ14ug6QoDsDDDEw |
+| 2026-09-21 | 我的100件长期好物：随身配饰来啦！ | https://mp.weixin.qq.com/s/ncwJ6NXK-9eRE3FOLlWqfg |
+| 2026-09-11 | 懒人要避开的思维方式！ | https://mp.weixin.qq.com/s/RCbIz2iI9KNyF63zfRaiaw |
+| 2026-09-09 | 日常好用，分享7款超可爱的收纳小包！ | https://mp.weixin.qq.com/s/7k8O-D1U2JRUZLmlN4nw9Xg |
+| 2026-09-06 | 照片 Skill｜拯救旅行废片，试试这 6 种风格！！！ | https://mp.weixin.qq.com/s/Elf3PrEmMURTfOr2zNohuA |
+| 2026-09-04 | 不到 50 块，就能打造高颜值书桌！ | https://mp.weixin.qq.com/s/ul-JXY4gMjH15E1IrPqiig |
+| 2026-09-01 | 会无限回购，提高效率的好用本子来啦！ | https://mp.weixin.qq.com/s/Rfnugp22ysYqD8c9PjkRZw |
+| 2026-08-30 | 豆包工作、千问办公、WorkBuddy：谁真的能替你干活？ | https://mp.weixin.qq.com/s/sPTTTKvXSQvbNX21u1pDUw |
+| 2026-08-28 | 只要3000+，MacBook Neo 值不值得买？ | https://mp.weixin.qq.com/s/Xe3HMYY0NxsDxuKw3ghsqw |
+
+封面例图：`examples/cover-japan-12days.png`（2.35:1，1888×800）。
+
+> 链接与封面图来自内容资产库 [qiuqiu-content-engine](https://github.com/wangsiji/qiuqiu-content-engine) 的 `articles_data.json`；微信链接时有失效，最新以公众号后台为准。
+
 ## 目录
 
 ```text
