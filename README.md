@@ -1,85 +1,82 @@
-# qiuqiu-cover-prompt
+# qiuqiu-wechat-cover
 
-「秋秋」微信公众号封面 Skill。它把一篇真实文章转换成统一的 2.35:1 横版封面：先读正文、提炼钩子、确认素材和文案，再生成或编辑图片。
+生成「秋秋」微信公众号封面的一套可迁移 Agent Skill：把一篇真实文章，转成统一 **2.35:1 横版品牌封面** —— 先读正文、提炼钩子、确认文案，再由内置的 Lovart 后端出图，全程内置真人形象与视觉风格，无需外部素材。
 
-Skill 的规范名称是 `$qiuqiu-wechat-cover`；`qiuqiu-cover-prompt` 是仓库名称。
+规范名 `$qiuqiu-wechat-cover`。
 
-## 能做什么
+## 特性
 
-- 好物分享、AI 工具测评、旅行、学习效率、数码体验和桌面改造封面
-- 固定暖木色复古像素工作台风格，保留真人秋秋和真实产品的辨识度
-- 新封面与已有封面局部编辑
-- 生成前提炼 3 个钩子，生成后检查比例、文字和素材一致性
+- **品牌内置**：秋秋真人身份图 + 暖木复古像素风格图随包分发（图 1 身份、图 2 风格），无需你搜图、传图或连素材库。
+- **流程闭环**：收集 → 分析 → 提案 3 钩子 → 生成/编辑 → 验收；文案未确认不出图。
+- **真实优先**：真实产品/Logo/旅行照原样使用，绝不凭空编造人物、品牌或事实。
+- **可迁移**：Lovart 出图后端（`tools/lovart-agent.py`，纯 Python 标准库）与其他辅助脚本全部随包分发。
 
-它不替代正文策划，也不会在缺少文章、真人照、产品图或 Logo 时自行编造事实。
-
-## 使用方式
-
-把本仓库交给支持加载 Skill 的智能体，然后调用：
-
-> 使用 `$qiuqiu-wechat-cover`，为这篇公众号文章生成封面：`/path/to/article.md`
-
-调用时：
-
-1. 提供完整正文、Markdown 内容或可读取的本地路径。
-2. 默认 Image 1 是 Skill 内置的秋秋真人身份参考，默认 Image 2 是内置封面风格参考；Skill 会先验证并真实注入，不依赖你额外上传。
-3. 按文章需要补充产品、Logo、截图、旅行照或旧封面；不需要的素材不用提供。
-4. 先查看主题判断、3 个钩子和构图建议，确认文案后再明确说“生成/跑图”。
-
-详细输入、阶段输出和失败处理见 [references/workflow.md](references/workflow.md)。
-
-## 自包含品牌资产
-
-本 Skill 是自包含的。安装仓库后已经包括：
-
-- 秋秋真人身份参考
-- 微信公众号固定视觉参考
-- 工作流、提示词模板、验收规则
-
-使用者无需单独下载秋秋真人照片、从历史对话找素材、连接个人素材库或从互联网搜索参考人物。安装后执行：
+## 快速开始
 
 ```bash
-python3 tools/resolve_assets.py
-```
+# 1. 克隆仓库
+git clone https://github.com/wangsiji/qiuqiu-wechat-cover
 
-正常情况下应返回 `ok: true` 和两个资产的 `absolute_path`；完整结构校验用：
+# 2. 挂到智能体 Skill 目录（Hermes 示例）
+cp -r qiuqiu-wechat-cover ~/.hermes/skills/
 
-```bash
+# 3. 配置 Lovart 密钥（出图后端）
+export LOVART_ACCESS_KEY="ak_..."
+export LOVART_SECRET_KEY="sk_..."
+
+# 4. 验证内置资产与结构
+cd ~/.hermes/skills/qiuqiu-wechat-cover
+python3 tools/resolve_assets.py       # 应输出 ok:true 和两个 absolute_path
 python3 tools/validate_skill.py .
+
+# 5. 让智能体生成
+#    → "对这篇公众号文章生成封面：/path/to/article.md"
 ```
 
-## 什么仍然需要用户提供
+## 用法
 
-Skill 内置的是品牌资产，不是文章事实资产。
-
-通常不需要用户再提供：秋秋真人身份参考、默认公众号视觉风格。仍然可能需要提供：当前文章的真实产品、产品包装、品牌 Logo、软件截图、旅行照片、需要编辑的原封面。内置资产缺失或无法真实注入时，Skill 会停止并说明运行时限制，不会凭空生成一个“像秋秋”的人物。
+1. 提供完整正文 / Markdown / 可读路径。只有标题会被标记「待确认」。
+2. 默认 图 1 = 内置秋秋身份，图 2 = 内置封面风格；按文章需要再补 产品/Logo/截图/旅行照（从 图 3+ 编号）。
+3. 先看 `主题判断 + 3 个钩子 + 推荐构图`，确认文案后再明确说“生成”。
+4. 出图默认走 Lovart（`set-mode --unlimited` 免费队列跑通，详见 [references/lovart-channel.md](references/lovart-channel.md)）。
 
 ## 目录
 
 ```text
 SKILL.md                          入口规则与硬约束
-agents/openai.yaml                UI 展示和默认调用提示
-references/workflow.md            输入角色、阶段协议、编辑边界
-references/style-guide.md         2.35:1 视觉系统
-references/prompt-template.md     可复制的生成提示词结构
-references/prompt-checklist.md    生成前后验收清单
-references/assets/                内置 Image 1、Image 2
-tools/resolve_assets.py           查找、验证、暴露内置资产
-tools/validate_skill.py           本地与 CI 校验
+agents/openai.yaml                UI 展示与默认提示
+references/
+  workflow.md                     输入角色、阶段协议、处理边界
+  style-guide.md                  2.35:1 视觉系统
+  prompt-template.md              可复制的提示词结构
+  prompt-checklist.md             生成前后验收清单
+  lovart-channel.md               出图后端操作细节（含免费跑通法）
+  assets/                         内置 Image 1（身份）与 Image 2（风格）
+tools/
+  resolve_assets.py               查找、校验、暴露内置资产
+  validate_skill.py               本地 & CI 级完整性校验
+  lovart-agent.py                 Lovart 出图后端（纯标准库）
 examples/                         已完成的示例
 ```
 
-生成的 PNG/JPG/WebP 默认保存到项目目录之外。调用时请提供保存目录；仓库不接收生成图片。
+## 约束（触发器）
+
+- 画布严格 **2.35:1**，优先 1880×800。
+- 视觉 = 暖木 × 复古像素 × 温馨工作台 × 真实主体。
+- 文案最多 3 组、全页约 20~35 汉字，主标题唯一焦点。
+- 保留口罩，真实感约 80% + 像素 20%；不做全像素/卡通/换脸。
+- 身份与风格禁止外部检索；缺真人照时不虚构人物。
 
 ## 校验与 CI
 
-GitHub Actions 会在提交时运行 `python3 tools/validate_skill.py .`。该校验只检查结构、链接与必需资产，不替代生成后的视觉验收。
+`tools/validate_skill.py` 覆盖：必需文件、相对链接、资产文件头、Lovart 后端存在且纯标准库、SKILL 关键措辞。GitHub Actions 在每次提交运行：
 
-## 安装
+```bash
+python3 tools/validate_skill.py .
+```
 
-仓库地址：<https://github.com/wangsiji/qiuqiu-wechat-cover>
+该校验检查结构，不替代出图后的视觉验收（中文逐字、人物轮廓需人为核对）。
 
 ## 许可
 
-MIT License
-
+[MIT](LICENSE)。内置 `tools/lovart-agent.py` 取自 [lovartai/lovart-skill](https://github.com/lovartai/lovart-skill)（MIT），一并分发。

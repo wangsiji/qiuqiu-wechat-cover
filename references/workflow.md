@@ -104,5 +104,19 @@ python3 tools/resolve_assets.py --data-uri
 参考图：图 1=身份(内置图已真实传入)，图 2=风格(内置图已真实传入)，图 3+=真实主体
 已检查：…
 待确认：…
+续改：thread_id=…（存进会话/可后续 git history 找回的日志）
 ```
+
+**生成完成后必须回填可续改句柄。** 调用图像工具返回的 `thread_id` / `project_id`（及输出文件路径）要随交付一起回报并留档——下次「改封面」用它续点局部修改，而不是新开一篇重跑。工具/运行时无 thread 概念时，留生成 file 路径 + 完整提示词即可。
+
+## Lovart 出图通道（自由执行后端）
+
+本 Skill 的默认执行后端是 Lovart Agent API，脚本已内置在 `tools/lovart-agent.py`（携带在包内，纯标准库，路径以仓库为准）。跑图前先：
+
+1. `tools/resolve_assets.py` 确认内置资产可读。
+2. 把 图 1 / 图 2 upload 成 CDN URL（每次新会话要重新 upload，旧 URL 可能失效）。
+3. 组装 [prompt-template.md](prompt-template.md) 提示词，用 `--attachments` 传这些 URL。
+4. 生成后用 PIL 量尺寸确认 2.35:1。
+
+Lovart 通道的已知坑、免费跑通法（`set-mode --unlimited`）和验收复用规则见 [SKILL.md](../SKILL.md)。
 

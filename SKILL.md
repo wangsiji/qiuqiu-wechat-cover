@@ -100,3 +100,7 @@ python3 tools/resolve_assets.py
 
 生成前后使用 [references/prompt-checklist.md](references/prompt-checklist.md)。不要把“提示词已准备好”说成“图片已生成”，也不要把模型可能出错的中文当成已验证事实。
 
+## Lovart 出图通道（默认执行后端）
+
+本 Skill 的实际出图走 Lovart Agent API：内置参考图经 `tools/lovart-agent.py`（纯标准库、已随包分发）upload 成 CDN URL 后作为 `--attachments` 注入提示词生图。免费跑通键是 `set-mode --unlimited`（排队换额度，不扣积分）。完整命令、项目/线程、已知坑与验收见 [references/lovart-channel.md](references/lovart-channel.md)。执行顺序：`resolve_assets.py` 验资产 → 内置两图 upload 拿 URL → `chat --project-id <从 projects --json 取>`。
+

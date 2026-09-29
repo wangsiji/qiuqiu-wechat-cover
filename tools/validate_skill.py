@@ -104,6 +104,34 @@ def main() -> int:
         if phrase not in skill_text:
             errors.append(f"SKILL.md is missing required guidance: {phrase}")
 
+    # Lovart execution-channel contract: SKILL.md must reference the bundled
+    # backend (tools/lovart-agent.py), and that file must exist and stay
+    # stdlib-only so the skill is self-contained on any clean clone.
+    lovart_skill_ref = "tools/lovart-agent.py"
+    if "Lovart 出图通道" not in skill_text and "references/lovart-channel.md" not in skill_text:
+        errors.append("SKILL.md must link the Lovart 出图通道 (or references/lovart-channel.md)")
+    elif lovart_skill_ref not in skill_text:
+        errors.append(
+            f"SKILL.md Lovart section must reference the bundled backend {lovart_skill_ref} "
+            "(it used to point at an absolute ~/.codex path that broke on other machines)"
+        )
+    lovart_script = root / "tools" / "lovart-agent.py"
+    if not lovart_script.is_file():
+        errors.append("missing bundled backend: tools/lovart-agent.py")
+    else:
+        script_text = lovart_script.read_text(encoding="utf-8", errors="replace")
+        # Enforce stdlib-only imports: split on known stdlib set. If any other
+        # import appears, the bundle is not portable.
+        allowed = {
+            "hashlib", "hmac", "json", "ssl", "time", "urllib", "uuid",
+            "typing", "os", "sys", "argparse", "pathlib", "datetime", "re", "collections",
+        }
+        for line in script_text.splitlines():
+            if line.startswith(("import ", "from ")):
+                top = line.split()[1].split(".")[0]
+                if top not in allowed:
+                    errors.append(f"tools/lovart-agent.py has non-stdlib import: {line.strip()}")
+
     if errors:
         print("Skill validation failed:")
         for error in errors:
