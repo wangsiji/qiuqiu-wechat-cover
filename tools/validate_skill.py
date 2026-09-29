@@ -131,6 +131,12 @@ def main() -> int:
                 top = line.split()[1].split(".")[0]
                 if top not in allowed:
                     errors.append(f"tools/lovart-agent.py has non-stdlib import: {line.strip()}")
+        # Compile smoke test: catch syntax errors even when Lovart isn't installed.
+        import py_compile
+        try:
+            py_compile.compile(str(lovart_script), doraise=True)
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"tools/lovart-agent.py failed to compile: {exc}")
 
     if errors:
         print("Skill validation failed:")

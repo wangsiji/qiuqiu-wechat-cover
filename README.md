@@ -79,4 +79,4 @@ python3 tools/validate_skill.py .
 
 ## 许可
 
-[MIT](LICENSE)。内置 `tools/lovart-agent.py` 取自 [lovartai/lovart-skill](https://github.com/lovartai/lovart-skill)（MIT），一并分发。
+[MIT](LICENSE)。内置 `tools/lovart-agent.py` 取自 [lovartai/lovart-skill](https://github.com/lovartai/lovart-skill)（MIT），其归属声明见 [NOTICE](NOTICE)。
