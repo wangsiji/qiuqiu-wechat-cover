@@ -56,7 +56,13 @@ python3 tools/validate_skill.py .
 | 2026-08-30 | 豆包工作、千问办公、WorkBuddy：谁真的能替你干活？ | https://mp.weixin.qq.com/s/sPTTTKvXSQvbNX21u1pDUw |
 | 2026-08-28 | 只要3000+，MacBook Neo 值不值得买？ | https://mp.weixin.qq.com/s/Xe3HMYY0NxsDxuKw3ghsqw |
 
-封面例图：`examples/cover-japan-12days.png`（2.35:1，1888×800）。
+封面例图（在产案例）：
+
+| 封面 | 说明 |
+|---|---|
+| ![cover-case-01](examples/cover-case-01.jpg) | 案例封面 1 |
+| ![cover-case-02](examples/cover-case-02.jpg) | 案例封面 2 |
+| ![cover-japan-12days](examples/cover-japan-12days.png) | 日本 12 天攻略（2.35:1，1888×800） |
 
 > 链接与封面图来自内容资产库 [qiuqiu-content-engine](https://github.com/wangsiji/qiuqiu-content-engine) 的 `articles_data.json`；微信链接时有失效，最新以公众号后台为准。
 
