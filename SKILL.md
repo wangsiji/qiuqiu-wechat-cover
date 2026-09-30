@@ -27,7 +27,7 @@ description: >
 
 本 Skill 自带两个固定品牌资产，属于 Skill 自身，不是每次任务需要用户重复提供的输入：
 
-- `references/assets/qiuqiu-face-reference.jpg`，角色：图 1（身份），用途：秋秋真人身份参考
+- `references/assets/qiuqiu-face-reference.jpg`，角色：图 1（身份），用途：秋秋真人身份参考（当前为其一版经确认的封面裁切人脸，生成/编辑时必须保持不变——不得换脸、美颜、改年龄或改发型）
 - `references/assets/qiuqiu-style-reference.png`，角色：图 2（风格），用途：公众号封面整体视觉风格参考
 
 ### 生成前必须真实加载

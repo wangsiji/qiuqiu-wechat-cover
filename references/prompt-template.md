@@ -18,7 +18,7 @@ COPY (Chinese, reproduce character by character, no extra text):
 - Optional subtitle: "[补充说明；没有就删除这一行]"
 
 REFERENCE ROLES:
-- Image 1: QIUQIU identity only. Keep realistic black hair, facial proportions, eyes, mask (unless removal was requested), skin tone and age impression. Do not copy its background, pose or text.
+- Image 1: QIUQIU identity only. Reproduce the EXACT same face as this reference (the approved cover face): same facial features, mask, black hair and hairstyle, skin tone, age impression. Do NOT restyle, beautify, change hairstyle or age. Do not copy its background, pose or text.
 - Image 2: overall style only. Use its warm wood pixel-game workspace, palette, lighting, typography hierarchy and desk relationships. Do not copy its text, person, logo or specific product.
 - Image 3+: real supplied product/logo/screenshot/travel photos. Use each as-is for [用途]; do not redraw, recolor, replace brand or invent objects.
 
