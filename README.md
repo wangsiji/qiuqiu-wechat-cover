@@ -1,9 +1,6 @@
 # qiuqiu-wechat-cover
 
-<p align="center"><strong>把公众号文章，变成一张好看的封面</strong></p>
 <p align="center">一个让 AI 帮你完成「选题理解 → 封面设计 → 图片生成 → 修改优化」的公众号封面 Skill。</p>
-
-<p align="center"><strong>不需要会设计，也不需要会写 Prompt。</strong></p>
 
 ---
 
@@ -27,8 +24,6 @@
 ## 先看几个实际效果
 
 <p align="center"><img src="examples/cover-case-01.jpg" alt="好物封面案例" width="49%"/> <img src="examples/cover-case-02.jpg" alt="生活方式封面案例" width="49%"/></p>
-
-<p align="center"><img src="examples/cover-japan-12days.png" alt="旅行攻略封面案例" width="900"/></p>
 
 <p align="center"><sub>同一套方法，可以用于好物、生活方式、旅行等不同类型的公众号内容。</sub></p>
 
