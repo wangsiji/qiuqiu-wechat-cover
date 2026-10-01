@@ -104,6 +104,7 @@ qiuqiu-wechat-cover/
 │   ├── prompt-template.md   Prompt Compiler 规范（tools/compile_prompt.py 是执行体）
 │   ├── prompt-checklist.md  生成前后验收清单 + 失败分类 F01–F10
 │   ├── failure-codes.md  独立失败码表（层归因 + 定向补丁）
+│   ├── failure-codes.json F0X → section + patch（compile 单一真相源）
 │   ├── lovart-channel.md 出图后端操作细节
 │   └── assets/           内置 Image 1（身份）+ Image 2（风格）
 ├── tools/

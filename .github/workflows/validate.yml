@@ -21,3 +21,24 @@ jobs:
           python-version: "3.x"
       - name: Validate skill package
         run: python3 tools/validate_skill.py .
+
+      - name: Execution chain - validate sample brief
+        run: python3 tools/validate_brief.py examples/sample-brief.json
+
+      - name: Execution chain - compile sample prompt
+        run: |
+          python3 tools/compile_prompt.py examples/sample-brief.json \
+            -o /tmp/sample-prompt.txt
+          test -s /tmp/sample-prompt.txt
+          grep -q "ALLOWED TEXT ONLY" /tmp/sample-prompt.txt
+          grep -q "戴了6年还在戴" /tmp/sample-prompt.txt
+          grep -q "2.35:1" /tmp/sample-prompt.txt
+
+      - name: Execution chain - failure patch stays byte-stable elsewhere
+        run: |
+          python3 tools/compile_prompt.py examples/sample-brief.json -o /tmp/v1.txt
+          python3 tools/compile_prompt.py examples/sample-brief.json \
+            --failure F03 -o /tmp/v3.txt
+          # F03 owns the asset_fidelity section only; count differing lines == 1 block
+          diff_lines=$(diff /tmp/v1.txt /tmp/v3.txt | grep -c '^[<>]' || true)
+          echo "changed prompt lines on F03 patch: $diff_lines"
