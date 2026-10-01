@@ -77,7 +77,8 @@ python3 tools/lovart-agent.py chat \
 
 ## 已知坑（实测）
 
-- **`Insufficient credits`** → 先 `set-mode --unlimited`（免费队列）。
+- **`Insufficient credits`** → 自动 fallback 已内置：主密钥 + 备用密钥链(`LOVART_BACKUP*_ACCESS_KEY/SECRET_KEY`) 逐把 + 自动切 `set-mode --unlimited`(免费队列)。手动也可 `set-mode --unlimited`。
+- **多把备用密钥** → `chat` 会自动按 `LOVART_BACKUP` → `LOVART_BACKUP2` → ... 顺序重试积分不足的 key;测试见 `tools/test_agent_fallback.py`。
 - **`Project '<id>' does not exist`** → project-id 手打错，用 `projects --json`。
 - **`generation_succeeded: false`** → 上游拒绝/超时；换 `--prefer-models` 或简化 prompt、或 `--include-tools` 换工具。
 - **HTTP 429** → 限流，等约 60 秒重试。
