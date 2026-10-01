@@ -70,7 +70,13 @@ export LOVART_SECRET_KEY="sk_..."
 python3 tools/resolve_assets.py  # → ok:true + 两个 absolute_path
 python3 tools/validate_skill.py .
 
-# 5. 交给智能体
+# 5. 走执行层管线（Cover Brief 数据契约 → Prompt → 机器验收）
+#    写好 examples/sample-brief.json 后：
+python3 tools/validate_brief.py  examples/sample-brief.json   # 契约校验
+python3 tools/compile_prompt.py  examples/sample-brief.json -o prompt.txt  # 编译
+python3 tools/validate_output.py path/to/generated.png        # 机器验收（比例 F09）
+
+# 6. 交给智能体
 #    → 「对这篇公众号文章生成封面：/path/to/article.md」
 ```
 
@@ -88,20 +94,26 @@ qiuqiu-wechat-cover/
 ├── agents/openai.yaml    UI 展示与默认提示
 ├── references/
 │   ├── workflow.md       阶段协议与处理边界
-│   ├── cover-brief.md    结构化 Brief（文章 → 提示词的中枢）⭐
-│   ├── identity-contract.md  身份层不可变 + Asset Fidelity 分级
-│   ├── copy-contract.md  Copy Lock：文案白名单（allowed_text）
+│   ├── cover-brief.md    结构化 Brief（数据契约，含 copy.allowed_text）⭐
+│   ├── cover-brief.schema.json  Brief 的 JSON Schema（数据契约）
+│   ├── identity-contract.md  身份层不可变（谁是人脸、什么不可改）
+│   ├── asset-contract.md   素材保护等级 0–3（产品=2 / Logo=3）
+│   ├── copy-contract.md  Copy Lock：allowed_text 唯一文案真相源
 │   ├── layout-system.md  构图编号模板 L01–L05（category → template）
 │   ├── style-guide.md    2.35:1 视觉系统（暖木×复古像素×真实）
-│   ├── prompt-template.md   Brief → 提示词的编译器骨架
-│   ├── prompt-checklist.md 生成前后验收清单 + 失败分类 F01–F10
+│   ├── prompt-template.md   Prompt Compiler 规范（tools/compile_prompt.py 是执行体）
+│   ├── prompt-checklist.md  生成前后验收清单 + 失败分类 F01–F10
+│   ├── failure-codes.md  独立失败码表（层归因 + 定向补丁）
 │   ├── lovart-channel.md 出图后端操作细节
 │   └── assets/           内置 Image 1（身份）+ Image 2（风格）
 ├── tools/
 │   ├── resolve_assets.py 校验 / 暴露内置资产
+│   ├── validate_brief.py 校验 Cover Brief 契约（Copy Lock / fidelity / layout）
+│   ├── compile_prompt.py Brief → Prompt 编译器（+ --failure 定向补丁）
+│   ├── validate_output.py 生成结果机器验收（存在/解码/尺寸/比例 F09）
 │   ├── validate_skill.py 本地 & CI 完整性校验
 │   └── lovart-agent.py   Lovart 出图后端（纯标准库，MIT）
-└── examples/            在产示例（封面图 + 完整案例）
+└── examples/            在产示例（封面图 + 完整案例 + sample-brief）
 ```
 
 ## 约束（品牌基线）
