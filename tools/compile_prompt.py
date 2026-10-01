@@ -3,24 +3,20 @@
 
     python3 tools/compile_prompt.py <brief.json> [--output out.txt] [--failure F0X]
 
-Reads a validated Cover Brief JSON and emits a ready-to-send Lovart prompt.
-One section per contract: copy lock -> ALLOWED TEXT, identity -> FACE,
-asset -> ASSET FIDELITY, layout -> LAYOUT, style -> STYLE.
+Emits a ready-to-send Lovart prompt from a validated Cover Brief.
+Each contract emits its OWN section; the prompt is the sections reassembled
+in a fixed order.
 
---failure <code> re-locks ONLY the section that owns that failure (see
-references/failure-codes.md) so a retry changes one layer, not the whole
-prompt.
+--failure <code>: real section patch. Loads references/failure-codes.json,
+replaces ONLY the section that owns that failure code, and reassembles. The
+other sections stay byte-identical. code->section map lives in that JSON
+(single source of truth), not here.
 """
 import argparse
 import json
 import sys
 import os
 
-FAILURE_LAYER = {
-    "F01": "identity", "F02": "copy", "F03": "asset", "F04": "asset",
-    "F05": "layout", "F06": "content", "F07": "quality", "F08": "copy",
-    "F09": "ratio", "F10": "style",
-}
 LAYOUT_NOTE = {
     "L01": "headline ~45%, person ~40%, decoration ~15%",
     "L02": "headline ~35%, product ~45%, person ~20%",
@@ -32,8 +28,14 @@ STYLE_FIXED = ("warm wooden pixel-game study/desk, bright warm window light, "
                "cream/purple/pink accents, cozy lively, real person + real objects "
                "integrated with soft pixel atmosphere")
 
+# section id used in the json failure map -> section key rendered here
+SECTION_ALIAS = {"ratio": "opener"}
 
-def render(b: dict) -> str:
+ORDER = ["opener", "article", "copy", "ref_roles", "asset_fidelity",
+         "style", "layout", "typography", "negative", "edit"]
+
+
+def render_sections(b: dict) -> dict:
     cv = b.get("cover", {})
     ratio = cv.get("ratio", "2.35:1")
     size = cv.get("size", "1880x800")
@@ -45,81 +47,98 @@ def render(b: dict) -> str:
     edit = b.get("edit", {})
     tpl = layout.get("template", "L02")
     assets = b.get("assets") or []
-
     allowed = copy.get("allowed_text") or []
 
-    blocks = []
-    blocks.append(
-        f"Create a {ratio} horizontal Chinese WeChat official-account cover for QIUQIU, "
-        f"canvas {size}."
-    )
-    blocks.append("")
-    # ARTICLE
-    blocks.append("ARTICLE (facts only, from the article): " + content.get("topic", ""))
-    blocks.append("")
-    # COPY + ALLOWED TEXT  (Copy Lock: single source = copy.allowed_text,
-    # NOT recomputed from content.*)
-    blocks.append("COPY (exact, no added words):")
-    for s in allowed:
-        blocks.append(f"- {s}")
-    blocks.append("ALLOWED TEXT ONLY (the image may contain ONLY these strings, nothing else):")
-    for s in allowed:
-        blocks.append(f"  「{s}」")
-    blocks.append("No other Chinese / English / decorative / fake-label / UI / sign / packaging text.")
-    blocks.append("")
-    # FACE (identity)
+    s = {}
+    s["opener"] = (f"Create a {ratio} horizontal Chinese WeChat official-account cover "
+                   f"for QIUQIU, canvas {size}.")
+    s["article"] = "ARTICLE (facts only, from the article): " + content.get("topic", "")
+    # copy lock
+    c = ["COPY (exact, no added words):"] + [f"- {x}" for x in allowed]
+    c.append('ALLOWED TEXT ONLY (the image may contain ONLY these strings, nothing else):')
+    c += [f"  \u300c{x}\u300d" for x in allowed]
+    c.append("No other Chinese / English / decorative / fake-label / UI / sign / packaging text.")
+    s["copy"] = "\n".join(c)
+    # reference roles
+    r = ["REFERENCE ROLES:"]
     if identity.get("enabled") is not False:
-        blocks.append("REFERENCE ROLES:")
         mask = "keep the face mask" if identity.get("mask", True) else "no face mask"
-        blocks.append(
-            "- Image 1 (Identity Layer) = QIUQIU's face ONLY. Reproduce the EXACT same face from "
-            "the reference: same features, black hair/haircut, skin, age. Do NOT restyle, "
-            f"beautify, slim, sharpen jaw, age-shift; {mask}.")
-    blocks.append(
-        "- Image 2 (Brand Layer) = style ONLY (pixel UI, wood, palette, lights). Do NOT copy its "
-        "text, person, logo, specific product.")
-    blocks.append("")
-    # ASSET FIDELITY (Asset Contract, by level)
+        r.append("- Image 1 (Identity): QIUQIU face ONLY. Reproduce the EXACT same face "
+                 "from the reference (features, black hair/haircut, skin, age); no restyle, "
+                 f"beautify, slim, jaw-sharpen, age-shift; {mask}.")
+    r.append("- Image 2 (Brand): style ONLY (pixel UI, wood, palette, lights). Do NOT copy its "
+             "text/person/logo/specific product.")
+    s["ref_roles"] = "\n".join(r)
+    # asset fidelity
     if assets:
-        blocks.append("ASSET FIDELITY:")
-        for a in assets:
-            lvl = int(a.get("fidelity", 0))
-            if lvl >= 2:
-                blocks.append(
-                    f"  - {a.get('id')} (level {lvl}): authoritative. Do NOT redraw, recolor, "
-                    "simplify, replace or modify. Position/size may change only.")
-            else:
-                blocks.append(f"  - {a.get('id')} (level {lvl}): may be approximated/stylized.")
-        blocks.append("")
-    # STYLE
-    blocks.append("STYLE: " + (style.get("note") or STYLE_FIXED))
-    blocks.append("")
-    # LAYOUT
-    blocks.append(f"LAYOUT: {tpl} template — {LAYOUT_NOTE.get(tpl, '')}")
-    blocks.append("")
-    # TYPOGRAPHY
-    blocks.append("TYPOGRAPHY: bold square pixel display type, main title largest, clear "
-                  "outline/shadow, exact Chinese glyphs.")
-    blocks.append("")
-    # NEGATIVE (allowed/invented constraints)
-    blocks.append("NEGATIVE: no unauthorized Chinese/English text, no invented products/logos, no "
-                  "cartoon/doll/celebrity face, no dark tech mood, keep the overall style consistent.")
-    blocks.append("")
-
-    # ---- edit mode ----
+        s["asset_fidelity"] = "ASSET FIDELITY (per asset, machine-bound by input/image role):\n" + \
+            "\n".join(_slug_asset(a, i) for i, a in enumerate(assets))
+    # style / layout / typography / negative
+    s["style"] = "STYLE: " + (style.get("note") or STYLE_FIXED)
+    s["layout"] = f"LAYOUT: {tpl} template — {LAYOUT_NOTE.get(tpl, '')}"
+    s["typography"] = ("TYPOGRAPHY: bold square pixel display type, main title largest, "
+                       "clear outline/shadow, exact Chinese glyphs.")
+    s["negative"] = ("NEGATIVE: no unauthorized Chinese/English text, no invented products/logos, "
+                     "no cartoon/doll/celebrity face, no dark tech mood, keep the overall style "
+                     "consistent.")
+    # edit
     if edit.get("enabled"):
         scope = edit.get("scope", "TEXT_ONLY")
-        blocks.append(f"EDIT MODE / EDIT_SCOPE = {scope}")
-        blocks.append("Preserve all untouched regions exactly; change only the "
-                      f"{scope.lower().replace('_',' ')} scope.")
-    return "\n".join(blocks)
+        tgt = edit.get("target", {})
+        e = [f"EDIT MODE / EDIT_SCOPE = {scope}"]
+        if tgt.get("type") == "asset" and tgt.get("value"):
+            e.append(f"TARGET: asset {tgt['value']}")
+            e.append("CHANGE: only modify that asset.")
+        e.append("PRESERVE: all other assets, person/face, text, background, lighting, layout.")
+        e.append("Preserve all untouched regions as closely as the edit model allows.")
+        s["edit"] = "\n".join(e)
+    return s
+
+
+def _slug_asset(a, i):
+    ref = a.get("input") or f"image_{i + 3}"   # image_3, image_4, ...
+    lvl = int(a.get("fidelity", 0))
+    if lvl >= 2:
+        role = ("authoritative. Do NOT redraw, recolor, deform, simplify, replace or "
+                "modify. Position/size only.")
+    else:
+        role = "decorative; may be approximated/stylized."
+    return f"- {ref} ({a.get('id')}, level {lvl}, input-attached as prompt&goods): {role}"
+
+
+def assemble(s: dict) -> str:
+    parts = []
+    for k in ORDER:
+        if k in s and s[k]:
+            parts.append(s[k])
+    return "\n\n".join(parts)
+
+
+def apply_failure(sec: dict, code, patches) -> dict:
+    """Replace exactly the section owning <code> with its patch; others untouched."""
+    entry = patches.get(code)
+    if not entry:
+        return sec
+    section = SECTION_ALIAS.get(entry["section"], entry["section"])
+    out = dict(sec)
+    if section in out:
+        out[section] = entry["patch"]  # replace whole section
+    else:
+        out[section] = entry["patch"]  # add (e.g. ratio when opener was defaulted)
+    return out
+
+
+def load_failures(repo_root):
+    p = os.path.join(repo_root, "references", "failure-codes.json")
+    with open(p, encoding="utf-8") as fh:
+        return json.load(fh)
 
 
 def main():
-    ap = argparse.ArgumentParser(description="compile a Cover Brief JSON to a Lovart prompt")
-    ap.add_argument("brief", help="path to cover-brief.json")
+    ap = argparse.ArgumentParser(description="compile a Cover Brief to a Lovart prompt")
+    ap.add_argument("brief")
     ap.add_argument("--output", "-o", help="write prompt to file")
-    ap.add_argument("--failure", "-f", help="failure code to re-patch, e.g. F03")
+    ap.add_argument("--failure", "-f", help="failure code to patch, e.g. F03")
     args = ap.parse_args()
 
     try:
@@ -128,7 +147,8 @@ def main():
     except Exception as e:
         print(f"cannot read brief: {e}"); return 1
 
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    sys.path.insert(0, os.path.join(root, "tools"))
     import validate_brief as vb
     if not vb.validate(brief):
         print("brief invalid:")
@@ -136,28 +156,18 @@ def main():
             print("  - " + e)
         return 1
 
-    preview = render(brief)  # build prompt
+    sec = render_sections(brief)
     if args.failure:
-        if args.failure not in FAILURE_LAYER:
-            print(f"unknown failure code {args.failure}"); return 2
-        # re-lock the owning section (directional re-patch). For copy: reassert allowed text.
-        layer = FAILURE_LAYER[args.failure]
-        # simplest honest directive: recompile the full prompt but lock
-        # identity / copy verbatim on relevant failure classes
-        tip = {
-            "copy": "ALLOWED TEXT ONLY - the image may only contain the exact whitelist; "
-                    "no extra Chinese. Re-check & fix every glyph.",
-            "identity": "FACE: freeze to Image 1 exactly; do not reface / alter / wander.",
-            "asset": "Real product reference: keep exactly, only reposition."
-        }.get(layer, "")
-        preview += "\n\nFix focus (" + args.failure + "): " + (tip or "fix only the failing layer")
+        fc = load_failures(root)
+        sec = apply_failure(sec, args.failure, fc)
 
+    text = assemble(sec)
     if args.output:
         with open(args.output, "w", encoding="utf-8") as fh:
-            fh.write(preview + "\n")
+            fh.write(text + "\n")
         print(f"wrote {args.output}")
     else:
-        print(preview)
+        print(text)
     return 0
 
 
