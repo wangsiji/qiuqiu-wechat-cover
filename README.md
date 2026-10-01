@@ -88,16 +88,20 @@ qiuqiu-wechat-cover/
 ├── agents/openai.yaml    UI 展示与默认提示
 ├── references/
 │   ├── workflow.md       阶段协议与处理边界
+│   ├── cover-brief.md    结构化 Brief（文章 → 提示词的中枢）⭐
+│   ├── identity-contract.md  身份层不可变 + Asset Fidelity 分级
+│   ├── copy-contract.md  Copy Lock：文案白名单（allowed_text）
+│   ├── layout-system.md  构图编号模板 L01–L05（category → template）
 │   ├── style-guide.md    2.35:1 视觉系统（暖木×复古像素×真实）
-│   ├── prompt-template.md  可复制的提示词骨架
-│   ├── prompt-checklist.md 生成前后验收清单
+│   ├── prompt-template.md   Brief → 提示词的编译器骨架
+│   ├── prompt-checklist.md 生成前后验收清单 + 失败分类 F01–F10
 │   ├── lovart-channel.md 出图后端操作细节
 │   └── assets/           内置 Image 1（身份）+ Image 2（风格）
 ├── tools/
 │   ├── resolve_assets.py 校验 / 暴露内置资产
 │   ├── validate_skill.py 本地 & CI 完整性校验
 │   └── lovart-agent.py   Lovart 出图后端（纯标准库，MIT）
-└── examples/              在产示例（封面图 + 完整案例）
+└── examples/            在产示例（封面图 + 完整案例）
 ```
 
 ## 约束（品牌基线）
