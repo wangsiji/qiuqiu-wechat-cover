@@ -1,0 +1,288 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "cover-brief.schema.json",
+  "title": "Cover Brief",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "cover",
+    "content",
+    "identity",
+    "style",
+    "layout",
+    "constraints"
+  ],
+  "properties": {
+    "cover": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ratio",
+        "size"
+      ],
+      "properties": {
+        "ratio": {
+          "type": "string",
+          "pattern": "^2\\.3[45]:1$"
+        },
+        "size": {
+          "type": "string",
+          "pattern": "^[0-9]+x[0-9]+$"
+        }
+      }
+    },
+    "content": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "category",
+        "topic",
+        "hook",
+        "title"
+      ],
+      "properties": {
+        "category": {
+          "type": "string",
+          "enum": [
+            "product",
+            "goods",
+            "comparison",
+            "ai",
+            "travel",
+            "personal",
+            "tutorial",
+            "learning",
+            "desk"
+          ]
+        },
+        "topic": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hook": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subtitle": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "copy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "allowed_text"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "confirmed"
+          ]
+        },
+        "hook_candidates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowed_text": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "reference",
+        "mask"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "reference": {
+          "type": "string"
+        },
+        "mask": {
+          "type": "boolean"
+        }
+      }
+    },
+    "style": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference",
+        "pixel_ratio"
+      ],
+      "properties": {
+        "reference": {
+          "type": "string"
+        },
+        "pixel_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "template"
+      ],
+      "properties": {
+        "template": {
+          "type": "string",
+          "pattern": "^L0[1-5]$"
+        },
+        "variant": {
+          "type": "string",
+          "enum": [
+            "hero",
+            "sparse",
+            "balanced",
+            "dense"
+          ]
+        },
+        "density": {
+          "type": "string",
+          "enum": [
+            "sparse",
+            "balanced",
+            "dense"
+          ]
+        },
+        "person_position": {
+          "type": "string",
+          "enum": [
+            "right",
+            "left",
+            "center",
+            "bottom"
+          ]
+        },
+        "title_position": {
+          "type": "string",
+          "enum": [
+            "left",
+            "top",
+            "center"
+          ]
+        }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "fidelity"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "real_product",
+              "real_subject",
+              "brand_asset",
+              "decorative",
+              "travel_photo",
+              "logo",
+              "screenshot"
+            ]
+          },
+          "fidelity": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3
+          }
+        }
+      }
+    },
+    "edit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "scope"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "TEXT_ONLY",
+            "PRODUCT_ONLY",
+            "PERSON_ONLY",
+            "BACKGROUND_ONLY",
+            "FULL"
+          ]
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "value"
+          ],
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unauthorized_text",
+        "invented_products",
+        "invented_logos"
+      ],
+      "properties": {
+        "unauthorized_text": {
+          "type": "boolean"
+        },
+        "invented_products": {
+          "type": "boolean"
+        },
+        "invented_logos": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
