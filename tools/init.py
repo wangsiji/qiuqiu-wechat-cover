@@ -14,8 +14,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
-from typing import Optional
+from typing import NoReturn, Optional
 
 DEFAULT_CONFIG_DIR = Path.home() / ".qiuqiu-wechat-cover"
 DEFAULT_CONFIG = DEFAULT_CONFIG_DIR / "config.json"
@@ -30,7 +31,7 @@ def load_config(path: Path = DEFAULT_CONFIG) -> dict:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise SystemExit(f"Cannot read config {path}: {exc}")
+        _die(f"Cannot read config {path}: {exc}")
 
 
 def save_config(config: dict, path: Path = DEFAULT_CONFIG) -> None:
@@ -39,6 +40,17 @@ def save_config(config: dict, path: Path = DEFAULT_CONFIG) -> None:
         json.dumps(config, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
+
+
+def _die(message: str) -> NoReturn:
+    """Print an error to stderr and exit non-zero (code 1).
+
+    Using SystemExit(str) would set the exit code to the message string,
+    which agents and callers can't read as a real failure status. Exit 1 +
+    message on stderr keeps the CLI usable and the failure explicit.
+    """
+    print(message, file=sys.stderr)
+    raise SystemExit(1)
 
 
 def credentials_status() -> str:
@@ -59,10 +71,10 @@ def resolve_identity(choice: str, custom: Optional[str]) -> str:
     if choice == "default":
         return DEFAULT_IDENTITY
     if not custom:
-        raise SystemExit("Custom identity requires --identity-path.")
+        _die("Custom identity requires --identity-path.")
     p = Path(custom).expanduser()
     if not p.is_file():
-        raise SystemExit(f"Identity reference does not exist: {p}")
+        _die(f"Identity reference does not exist: {p}")
     return str(p.resolve())
 
 
@@ -114,11 +126,11 @@ def initialize(
         identity_mode = "default"
 
     if lovart not in {"auto", "yes", "no"}:
-        raise SystemExit("lovart must be one of: auto, yes, no")
+        _die("lovart must be one of: auto, yes, no")
 
     if lovart == "yes":
         if not credentials_configured():
-            raise SystemExit(
+            _die(
                 "Lovart selected, but credentials are not configured. "
                 "Set LOVART_ACCESS_KEY and LOVART_SECRET_KEY, then rerun init."
             )
