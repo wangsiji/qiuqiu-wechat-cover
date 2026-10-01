@@ -55,6 +55,32 @@ class AgentSkillError(Exception):
         super().__init__(message)
 
 
+def _credit_insufficient(e: AgentSkillError) -> bool:
+    """True when the Lovart API reports not-enough-credits.
+    Match on the message text (the API returns "Insufficient credits" etc.)
+    rather than a brittle HTTP code, which varies by endpoint."""
+    if not isinstance(e, AgentSkillError):
+        return False
+    msg = (e.message or "").lower()
+    return any(k in msg for k in ("insufficient", "credit", "quota", "余额", "积分不足"))
+
+
+def _backup_cred_pool() -> list[tuple[str, str]]:
+    """Ordered backup Lovart credential pairs from env, oldest env name first.
+    Reads LOVART_BACKUP_ACCESS_KEY/SECRET, then LOVART_BACKUP2_ACCESS_KEY/
+    SECRET, and so on up to LOVART_BACKUP4. Skips incomplete pairs.
+    Returns [] when none configured."""
+    pool = []
+    for i in ("", "2", "3", "4"):
+        base = f"LOVART_BACKUP{i}_ACCESS_KEY"
+        bs = f"LOVART_BACKUP{i}_SECRET_KEY"
+        ak = os.environ.get(base, "")
+        sk = os.environ.get(bs, "")
+        if ak and sk:
+            pool.append((ak, sk))
+    return pool
+
+
 class AgentSkill:
     """Lovart Agent OpenAPI client."""
 
@@ -905,13 +931,43 @@ def main():
 
             prefer_models = json.loads(args.prefer_models) if args.prefer_models else None
             subjects = json.loads(args.subjects) if args.subjects else None
-            result = skill.chat(prompt=args.prompt, project_id=project_id,
-                                attachments=args.attachments, thread_id=args.thread_id,
-                                prefer_models=prefer_models,
-                                include_tools=args.include_tools,
-                                exclude_tools=args.exclude_tools,
-                                mode=args.mode,
-                                subjects=subjects, kits=args.kits)
+
+            # Fallback on credit-insufficient: walk a credential chain. The
+            # free (unlimited) queue is preferred; when a key runs out of
+            # credits, switch it to unlimited and try the next configured
+            # backup key. Order: primary, then LOVART_BACKUP*, LOVART_BACKUP2*...
+            chain = [(args.ak, args.sk)] + _backup_cred_pool()
+            # de-dupe while preserving order
+            seen = set()
+            chain = [c for c in chain if not (c in seen or seen.add(c))]
+
+            result = None
+            for idx, (ak, sk) in enumerate(chain):
+                if idx:
+                    skill = AgentSkill(base_url=args.base_url, access_key=ak,
+                                       secret_key=sk, timeout=args.timeout)
+                try:
+                    result = skill.chat(prompt=args.prompt, project_id=project_id,
+                                        attachments=args.attachments, thread_id=args.thread_id,
+                                        prefer_models=prefer_models,
+                                        include_tools=args.include_tools,
+                                        exclude_tools=args.exclude_tools,
+                                        mode=args.mode,
+                                        subjects=subjects, kits=args.kits)
+                    break
+                except AgentSkillError as e:
+                    if not _credit_insufficient(e):
+                        raise
+                    if idx == len(chain) - 1:
+                        raise  # every credential exhausted; surface the last error
+                    # Move this key to the free unlimited queue for the next tries
+                    try:
+                        skill.set_mode(unlimited=True)
+                    except Exception:
+                        pass
+                    print(f"key {idx+1} insufficient credits; trying next backup key with unlimited queue.",
+                          file=sys.stderr)
+            assert result is not None
 
             # Auto-save state
             if result.get("project_id"):
