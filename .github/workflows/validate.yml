@@ -34,3 +34,6 @@ jobs:
         run: python3 tools/test_failure_patches.py
       - name: Regression test first-run setup
         run: python3 tools/test_init.py
+      - name: Regression test credit fallback
+        run: |
+          python3 tools/test_agent_fallback.py
