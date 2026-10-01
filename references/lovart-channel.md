@@ -62,6 +62,24 @@ python3 tools/lovart-agent.py chat \
 - **HTTP 429** → 限流，等约 60 秒重试。
 - **HTTP 409 (2011)** → 同线程有任务在跑，等完成或换新线程。
 
+## 成本控制（积分差异的根源是「模型，不是 prompt 长度」）
+
+同一项目两次出图可能差很多积分（实测 14 分 vs 35 分）。根因是 Lovart 每次都让 Agent 自行选图像生成器和出图张数——**不是 prompt 里加了字所以更贵**。
+
+`--prefer-models` 只是把工具名作为 `prefer_tool_categories` 软偏好传给 Agent，**不是硬性钉死模型**，仍可能飘逸；API 也不返回 cost/token 明细。因此：
+
+- **可用、值得固化的低跑位**（每次 chat 都带）：
+  ```bash
+  python3 tools/lovart-agent.py chat \
+    --mode fast \
+    --prefer-models '{"IMAGE":["generate_image_midjourney"]}' \
+    --include-tools generate_image_midjourney \
+    --project-id <id> --prompt "$(cat prompt)" --attachments U1 U2 --download --output-dir /tmp/out
+  ```
+- `--mode fast` = 轻量单遍，省 Agent 思考成本；`thinking` 更贵。
+- **要确认单次实际扣几分**，只能去 Lovart 平台后台看那笔明细；API 不返回。若发现某句积分异常，检查是不是走了 `thinking` 或 Multi-image，这是验证成本行为的唯一入口。
+- 免费通道：`set-mode --unlimited` + `query-mode` 确认 `unlimited:true`；若仍报 `Insufficient credits` 属偶发，直接重试（已实测）。
+
 ## 验收
 
 生成后按主协议用 PIL 量尺寸确认 2.35:1：
