@@ -4,7 +4,7 @@
 
 ## Allowed Text（白名单）
 
-文案在确认阶段锁进 `references/cover-brief.md` 的 `content.*` 后，编译成：
+文案在**用户确认**后锁进 `references/cover-brief.md` 的 `copy.allowed_text`（**唯一真相源**；`content.*` 只是给人读的摘要，不参与文字注入）。Compiler 只读它：
 
 ```json
 {

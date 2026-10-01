@@ -32,25 +32,6 @@ Content   Layer  → 产品 / 旅行照 / 桌面 / 文章主题      ← 真实�
 - **默认保留口罩**；只有用户明确说「摘口罩」才去掉。
 - 身份漂移是评审时最常见的失败项（F01），一旦发现只修 identity 层，不动其他。
 
-## Asset Fidelity（真实素材保护等级）
+## Asset Fidelity
 
-`references/cover-brief.md` 的 `assets[].fidelity` 取值（越小越可改）：
-
-| level | name | 允许改动 |
-|---|---|---|
-| 0 | decorative | 可重绘 |
-| 1 | reference | 可近似 |
-| 2 | real_subject | 禁重绘、禁换色、禁换品牌 |
-| 3 | brand_asset | 禁重绘 / 禁换色 / 禁改 Logo |
-
-**默认映射**：产品 / 旅行照 = 2；Logo / 品牌图标 = 3；纯装饰 = 0。
-
-Prompt 编译时按等级注入保护段：
-
-```text
-ASSET FIDELITY = LEVEL 3
-This asset is authoritative. Do not reinterpret, redraw, stylize,
-recolor, simplify, replace or modify it.
-```
-
-等级 0 不注入该段。
+真实素材（产品 / Logo / 旅行照 / 旧封面）的**保护等级**已拆到 **[asset-contract.md](asset-contract.md)** 单独维护，不在这里。「秋秋是谁」才归本文件。

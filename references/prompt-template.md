@@ -1,19 +1,19 @@
 # 提示词编译器（Prompt Compiler）
 
-把 `references/cover-brief.md` 编译成给图像后端的最终提示词。顺序固定，每段对应一个 Contract / 系统。**不要跳段，不要整段手写。**
+把 `references/cover-brief.md` 编译成给图像后端的最终提示词。**本文件是「编译器规范」：`tools/compile_prompt.py` 是它的可执行实现**——`python3 tools/compile_prompt.py <brief.json> -o prompt.txt` 直接产出下方「编译产物」的逐段拼接，无需再手拼。手拼只用于没有脚本可用时的后备。
 
 ## 编译过程
 
 ```
-cover-brief.md
-  ├─ content.*      → COPY + ALLOWED TEXT（copy-contract）
+cover-brief.json
+  ├─ content.*   (+copy.allowed_text) → COPY + ALLOWED TEXT（copy-contract）
   ├─ identity.*     → REFERENCE ROLES + IDENTITY（identity-contract）
   ├─ style.*        → STYLE（style-guide）
   ├─ layout.template → LAYOUT（layout-system）
-  ├─ assets[].fidelity → ASSET FIDELITY（identity-contract）
+  ├─ assets[].fidelity → ASSET FIDELITY（asset-contract）
   └─ constraints.*  → NEGATIVE
           ↓
-      Image Tool Prompt
+      Lovart prompt.txt
 ```
 
 ## 输入契约（Fail-closed，先于一切）
@@ -35,15 +35,14 @@ Create a 2.35:1 horizontal WeChat Official Account article cover for creator QIU
 
 ARTICLE: [一句话正文主题 + 点击理由，有正文依据]
 
-COPY (Chinese, exact, no extra):
-- Hook: "「hook」"
-- Proof title: "「title」"
-- Optional subtitle: "「subtitle；没有则删除」"
+COPY (Chinese, exact, no extra) —— 仅来自 copy.allowed_text，不重复从 content.* 推导:
+- 「allowed_text[0]」
+- 「allowed_text[1]」
 
 ALLOWED TEXT ONLY:
-The image may contain ONLY these Chinese strings:
-「content」
-「title」
+The image may contain ONLY these Chinese strings (copy.allowed_text):
+「allowed_text[0]」
+「allowed_text[1]」
 No other Chinese characters. No English. No decorative text.
 No fake labels. No UI text. No signs. No packaging text.
 
