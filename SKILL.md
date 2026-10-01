@@ -49,7 +49,8 @@ python3 tools/init.py --identity default --lovart no
 
 按 [references/workflow.md](references/workflow.md) 执行以下阶段。核心是把每次任务的判断先落成 **Cover Brief**（结构化中间层，见 [references/cover-brief.md](references/cover-brief.md)），再编译成提示词——换后端/换模型时品牌逻辑不重写：
 
-1. **初始化（仅首次）**：确认人物身份与 Lovart 配置；未初始化先暂停。\n2. **收集**：先要完整文章（正文、Markdown 内容或可读取的本地路径），再确认需要的图片。
+1. **初始化（仅首次）**：确认人物身份与 Lovart 配置；未初始化先暂停。
+2. **收集**：先要完整文章（正文、Markdown 内容或可读取的本地路径），再确认需要的图片。
 3. **分析**：从正文提取主题、点击理由、一个核心数字/结果/冲突，以及必须真实呈现的对象，产出 Cover Brief（`content.*`、`copy.allowed_text`、`layout.template` 与 `assets.*`）。用 `python3 tools/validate_brief.py <brief.json>` 校验契约（Copy Lock 必须 `confirmed`、fidelity 0–3、layout 合法）。
 4. **提案**：给出 3 个短钩子和 1 个构图建议；用户确认后才把最终文案锁进 `copy.allowed_text`（`copy.status = confirmed`）；用户未确认文案时不生成图片。
 5. **编译与生成**：`python3 tools/compile_prompt.py <brief.json> -o prompt.txt` 编译出提示词（Copy Lock 只读 `copy.allowed_text`）；调用 Lovart 前先 `resolve_assets.py` 加载内置资产；用户明确说“生成/跑图”才调用图像工具；局部修改遵守最小变更。
