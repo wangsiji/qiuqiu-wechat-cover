@@ -57,15 +57,7 @@
 
 ## 第一次使用：直接在智能体里安装
 
-你不需要下载代码，也不需要打开终端。
-
-如果你使用的 AI Agent 支持安装 Skill，**直接把这个项目的 GitHub 地址发给智能体**，然后告诉它：
-
-> **帮我安装这个 Skill。**
-
-项目地址：
-
-**https://github.com/wangsiji/qiuqiu-wechat-cover**
+> **帮我安装这个 Skill：https://github.com/wangsiji/qiuqiu-wechat-cover**
 
 智能体会读取这个项目并完成安装。
 
