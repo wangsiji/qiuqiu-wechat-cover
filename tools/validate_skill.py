@@ -15,6 +15,7 @@ def main() -> int:
         "README.md",
         "agents/openai.yaml",
         "references/workflow.md",
+        "references/agent-bootstrap.md",
         "references/cover-brief.md",
         "references/cover-brief.schema.json",
         "references/identity-contract.md",
@@ -109,6 +110,7 @@ def main() -> int:
     required_phrases = (
         "2.35:1",
         "references/workflow.md",
+        "references/agent-bootstrap.md",
         "references/prompt-template.md",
         "tools/resolve_assets.py",
         "qiuqiu-face-reference.jpg",

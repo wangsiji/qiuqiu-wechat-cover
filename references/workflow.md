@@ -1,8 +1,14 @@
 # 工作流与输出协议
 
+> **Bootstrap Gate 优先级最高。** 首次触发必须先读取 [agent-bootstrap.md](agent-bootstrap.md) 并完成初始化；未完成不得进入以下正文工作流。
+
 这份文档只处理“什么时候做什么”。视觉参数读 [style-guide.md](style-guide.md)，跑图时读 [prompt-template.md](prompt-template.md)，验收清单读 [prompt-checklist.md](prompt-checklist.md)。
 
-## 0. 首次使用初始化（只执行一次）
+## 0. Bootstrap Gate（首次使用强制执行）
+
+详见 [agent-bootstrap.md](agent-bootstrap.md)。能执行脚本时先运行 `python3 tools/init.py --check`；只有 `next_action=continue_workflow` 才进入收集阶段。Agent 无法执行脚本时也必须执行同样的对话 Gate。
+
+## 1. 首次使用初始化（只执行一次）
 
 第一次使用 Skill 时，**通过智能体对话完成初始化，不要求普通用户运行命令**。
 
