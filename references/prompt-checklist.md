@@ -36,6 +36,25 @@
 - 必要的真实素材缺失（无文字名/留白替代可用）
 - 文案未确认
 
+## 失败原因分类（Failure Codes）
+
+验收不通过时，判 `F##`，**只修对应一层**，不全文重写：
+
+| Code | 失败 | 只修 |
+|---|---|---|
+| F01 | 人物身份漂移 | identity 层（Image 1 / 冻结特征） |
+| F02 | 中文错字 / 多余文字 | Copy Lock（allowed_text） |
+| F03 | 产品变形 | asset fidelity（升到 level 2/3） |
+| F04 | Logo 失真 | asset fidelity（level 3） |
+| F05 | 构图拥挤 / 比例失衡 | layout 模板或 category |
+| F06 | 主题不明确 | content.category / topic |
+| F07 | 画面过暗 | style-guide 光线段 |
+| F08 | 出现未授权文字 | NEGATIVE + allowed_text |
+| F09 | 比例错误 | cover.ratio / 尺寸 |
+| F10 | 风格漂移 | style-guide 固定段 |
+
+流程：`生成 → 失败归类 Fxx → 只改对应段 → 重跑 → 回归检查(F01-F10 全过)`。
+
 ## 生成后
 
 - [ ] 实际尺寸和比例正确（2.35:1）
