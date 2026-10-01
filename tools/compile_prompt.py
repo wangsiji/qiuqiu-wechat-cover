@@ -7,10 +7,9 @@ Emits a ready-to-send Lovart prompt from a validated Cover Brief.
 Each contract emits its OWN section; the prompt is the sections reassembled
 in a fixed order.
 
---failure <code>: real section patch. Loads references/failure-codes.json,
-replaces ONLY the section that owns that failure code, and reassembles. The
-other sections stay byte-identical. code->section map lives in that JSON
-(single source of truth), not here.
+--failure <code>: additive section patch. Loads references/failure-codes.json,
+injects the failure-specific instruction into ONLY the section that owns that
+failure code, and reassembles. The original section content is preserved.
 """
 import argparse
 import json
@@ -28,7 +27,6 @@ STYLE_FIXED = ("warm wooden pixel-game study/desk, bright warm window light, "
                "cream/purple/pink accents, cozy lively, real person + real objects "
                "integrated with soft pixel atmosphere")
 
-# section id used in the json failure map -> section key rendered here
 SECTION_ALIAS = {"ratio": "opener"}
 
 ORDER = ["opener", "article", "copy", "ref_roles", "asset_fidelity",
@@ -53,13 +51,13 @@ def render_sections(b: dict) -> dict:
     s["opener"] = (f"Create a {ratio} horizontal Chinese WeChat official-account cover "
                    f"for QIUQIU, canvas {size}.")
     s["article"] = "ARTICLE (facts only, from the article): " + content.get("topic", "")
-    # copy lock
+
     c = ["COPY (exact, no added words):"] + [f"- {x}" for x in allowed]
     c.append('ALLOWED TEXT ONLY (the image may contain ONLY these strings, nothing else):')
-    c += [f"  \u300c{x}\u300d" for x in allowed]
+    c += [f"  「{x}」" for x in allowed]
     c.append("No other Chinese / English / decorative / fake-label / UI / sign / packaging text.")
     s["copy"] = "\n".join(c)
-    # reference roles
+
     r = ["REFERENCE ROLES:"]
     if identity.get("enabled") is not False:
         mask = "keep the face mask" if identity.get("mask", True) else "no face mask"
@@ -69,11 +67,10 @@ def render_sections(b: dict) -> dict:
     r.append("- Image 2 (Brand): style ONLY (pixel UI, wood, palette, lights). Do NOT copy its "
              "text/person/logo/specific product.")
     s["ref_roles"] = "\n".join(r)
-    # asset fidelity
+
     if assets:
-        s["asset_fidelity"] = "ASSET FIDELITY (per asset, machine-bound by input/image role):\n" + \
-            "\n".join(_slug_asset(a, i) for i, a in enumerate(assets))
-    # style / layout / typography / negative
+        s["asset_fidelity"] = "ASSET FIDELITY (per asset, machine-bound by input/image role):\n" +             "\n".join(_slug_asset(a, i) for i, a in enumerate(assets))
+
     s["style"] = "STYLE: " + (style.get("note") or STYLE_FIXED)
     s["layout"] = f"LAYOUT: {tpl} template — {LAYOUT_NOTE.get(tpl, '')}"
     s["typography"] = ("TYPOGRAPHY: bold square pixel display type, main title largest, "
@@ -81,7 +78,7 @@ def render_sections(b: dict) -> dict:
     s["negative"] = ("NEGATIVE: no unauthorized Chinese/English text, no invented products/logos, "
                      "no cartoon/doll/celebrity face, no dark tech mood, keep the overall style "
                      "consistent.")
-    # edit
+
     if edit.get("enabled"):
         scope = edit.get("scope", "TEXT_ONLY")
         tgt = edit.get("target", {})
@@ -96,7 +93,7 @@ def render_sections(b: dict) -> dict:
 
 
 def _slug_asset(a, i):
-    ref = a.get("input") or f"image_{i + 3}"   # image_3, image_4, ...
+    ref = a.get("input") or f"image_{i + 3}"
     lvl = int(a.get("fidelity", 0))
     if lvl >= 2:
         role = ("authoritative. Do NOT redraw, recolor, deform, simplify, replace or "
@@ -115,16 +112,19 @@ def assemble(s: dict) -> str:
 
 
 def apply_failure(sec: dict, code, patches) -> dict:
-    """Replace exactly the section owning <code> with its patch; others untouched."""
+    """Append the failure patch to its owning section; preserve all base content."""
     entry = patches.get(code)
     if not entry:
         return sec
     section = SECTION_ALIAS.get(entry["section"], entry["section"])
     out = dict(sec)
-    if section in out:
-        out[section] = entry["patch"]  # replace whole section
+    patch = entry.get("patch", "").strip()
+    if not patch:
+        return out
+    if section in out and out[section]:
+        out[section] = out[section].rstrip() + "\n\nFAILURE PATCH " + code + ": " + patch
     else:
-        out[section] = entry["patch"]  # add (e.g. ratio when opener was defaulted)
+        out[section] = "FAILURE PATCH " + code + ": " + patch
     return out
 
 
@@ -159,6 +159,9 @@ def main():
     sec = render_sections(brief)
     if args.failure:
         fc = load_failures(root)
+        if args.failure not in fc:
+            print(f"unknown failure code: {args.failure}")
+            return 1
         sec = apply_failure(sec, args.failure, fc)
 
     text = assemble(sec)
