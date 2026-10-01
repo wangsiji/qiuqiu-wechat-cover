@@ -11,9 +11,15 @@ description: >
 
 这是一套可复用的品牌封面工作流。每次只替换文章主题、封面文案和真实主体，保持固定的视觉识别。
 
-## 首次使用：直接在智能体里完成初始化
+## 首次使用：Bootstrap Gate（强制）
 
-新用户第一次使用本 Skill 时，**不要直接进入文章分析**。先确认两件事：
+**安装 Skill ≠ 初始化完成。** 每次首次触发本 Skill，必须先执行 [references/agent-bootstrap.md](references/agent-bootstrap.md) 定义的 Bootstrap Gate；未完成前不得进入文章分析、Cover Brief、Prompt 编译或图像生成。
+
+如果运行环境支持脚本，先执行 `python3 tools/init.py --check`（或 `--bootstrap`）读取机器状态。只有 `next_action=continue_workflow` 才能进入正文工作流。若 Agent 无法执行脚本，也必须按照 Bootstrap 文档主动询问人物身份与 Lovart 选择，不得假设已经配置。
+
+
+
+新用户第一次使用本 Skill 时，**不要直接进入文章分析**。先完成 Bootstrap：确认两件事：
 
 1. **人物身份**：使用 Skill 内置的默认「秋秋」人物，还是替换成用户自己的真人身份图。
 2. **图片生成后端**：是否使用 Lovart.ai；如果使用，当前运行环境是否已经配置 Lovart 密钥。
@@ -43,7 +49,7 @@ python3 tools/init.py --identity custom --identity-path /path/to/identity.jpg --
 python3 tools/init.py --identity default --lovart no
 ```
 
-初始化完成后，不再重复询问；只有用户明确要求替换人物或重新配置生成后端时才重新运行。
+初始化完成后，不再重复询问；只有用户明确要求替换人物或重新配置生成后端时才重新运行。若用户只回答了其中一项，继续询问另一项，不得偷偷使用默认值结束初始化。
 
 ## 工作流
 
