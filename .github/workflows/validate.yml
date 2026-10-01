@@ -32,3 +32,5 @@ jobs:
           grep -q "2.35:1" /tmp/sample-prompt.txt
       - name: Regression test failure patches
         run: python3 tools/test_failure_patches.py
+      - name: Regression test first-run setup
+        run: python3 tools/test_init.py
