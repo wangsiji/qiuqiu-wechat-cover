@@ -4,14 +4,35 @@ Lovart 是本 Skill 的默认执行后端：一个把 CDN 参考图 + 提示词�
 
 本文件是操作细节；品牌/文案/验收规则见 [SKILL.md](../SKILL.md) 与 [prompt-template.md](prompt-template.md)。
 
-## 前置
+## 首次配置
+
+新用户先运行：
 
 ```bash
-export LOVART_ACCESS_KEY="ak_..."     # 用户提供，勿写入日志/提交
+python3 tools/init.py
+```
+
+初始化会询问：
+
+1. 使用默认「秋秋」人物，还是替换为自己的 identity reference。
+2. 是否使用 Lovart 图片生成。
+
+如果使用 Lovart，当前环境必须提供：
+
+```bash
+export LOVART_ACCESS_KEY="ak_..."
 export LOVART_SECRET_KEY="sk_..."
 ```
 
-首次会自动保存在 `~/.lovart/state.json`（项目与线程），一般无需手动建项目。
+**密钥只存在于运行环境，不写入 `~/.qiuqiu-wechat-cover/config.json`、Git 或日志。**
+
+查看状态：
+
+```bash
+python3 tools/init.py --check
+```
+
+如果暂不配置 Lovart，仍可完成 Cover Brief 与 Prompt Compiler 工作流。
 
 ## 免费跑通（关键顺序）
 
