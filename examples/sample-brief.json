@@ -1,0 +1,49 @@
+{
+  "cover": {
+    "ratio": "2.35:1",
+    "size": "1880x800"
+  },
+  "content": {
+    "category": "product",
+    "topic": "随身配饰",
+    "hook": "100件长期好物",
+    "title": "戴了6年还在戴",
+    "subtitle": ""
+  },
+  "copy": {
+    "status": "confirmed",
+    "allowed_text": [
+      "100件长期好物",
+      "戴了6年还在戴"
+    ]
+  },
+  "identity": {
+    "enabled": true,
+    "reference": "references/assets/qiuqiu-face-reference.jpg",
+    "mask": true
+  },
+  "style": {
+    "reference": "references/assets/qiuqiu-style-reference.png",
+    "pixel_ratio": 0.2
+  },
+  "layout": {
+    "template": "L02"
+  },
+  "assets": [
+    {
+      "id": "necklace",
+      "kind": "real_product",
+      "fidelity": 2
+    },
+    {
+      "id": "bracelet",
+      "kind": "real_product",
+      "fidelity": 2
+    }
+  ],
+  "constraints": {
+    "unauthorized_text": false,
+    "invented_products": false,
+    "invented_logos": false
+  }
+}
