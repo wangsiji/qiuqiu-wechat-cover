@@ -5,7 +5,7 @@
 <h1 align="center">qiuqiu-wechat-cover</h1>
 
 <p align="center"><b>把一篇公众号文章，稳定地变成一张统一的品牌封面</b></p>
-<p align="center">文章 → Cover Brief → Prompt → 生成 → 验收 → Failure Patch → Retry</p>
+<p align="center">Article → Brief → Prompt → Generate → Validate → Retry</p>
 
 <p align="center">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
@@ -14,307 +14,296 @@
 
 ---
 
-## 这是什么
+## ✨ 这是什么
 
-qiuqiu-wechat-cover 是一个面向「秋秋很开心」公众号的 **Agent Skill + Prompt Compiler + Cover Brief 数据契约 + 验收系统**。
+**qiuqiu-wechat-cover** 是一个面向微信公众号封面制作的 Agent Skill。
 
-它解决的不是“让 AI 随便生成一张好看的图”，而是：
+它把「读文章 → 定文案 → 定人物 → 定素材 → 生成 → 验收 → 修正」整理成一套可重复执行的流程。
 
-> **同一个账号，连续做几十篇、上百篇文章后，封面依然像同一个品牌。**
+它的目标不是让 AI 偶尔生成一张好看的图，而是：
 
-核心思路是把原本依赖模型发挥的封面制作过程，拆成一条可验证的执行链：
+> **连续做几十篇、上百篇封面，仍然保持人物、风格、文案和真实素材的一致性。**
+
+核心链路：
 
 ```text
-文章
-  ↓
-文章事实 / 主题提炼
-  ↓
+公众号文章
+   ↓
 Cover Brief
-  ↓
-validate_brief
-  ↓
+   ↓
+文案 / 人物 / 素材 / 构图锁定
+   ↓
 Prompt Compiler
-  ↓
-图像生成后端
-  ↓
-validate_output
-  ↓
-人工 / 视觉验收
-  ↓
-PASS ─────────────→ FINAL
-  ↑
-  └── FAIL → F01~F10 → Failure Patch → Retry
+   ↓
+图像生成
+   ↓
+机器 + 人工 / 视觉验收
+   ↓
+PASS → 发布
+FAIL → Failure Patch → Retry
 ```
-
-最重要的不是某一段 Prompt，而是 **中间层数据契约 + 单一真相源 + 定向修复 + 回归测试**。
-
-## 你可以用它做什么
-
-- 从真实公众号文章提炼封面主题。
-- 在生成前锁定最终中文文案。
-- 固定人物身份与品牌视觉。
-- 让产品、Logo、旅行照片等真实素材按保护等级使用。
-- 用 Cover Brief 把文章事实、文案、素材、构图结构化。
-- 用 Prompt Compiler 将 Brief 编译成可执行 Prompt。
-- 生成失败后，只针对对应问题注入 F01～F10 Patch，而不是推翻整张图。
-- 用机器校验检查文件、格式、尺寸和 2.35:1 比例。
-- 用 GitHub Actions 对 Skill 结构、Brief、Prompt Compiler 和 Failure Patch 做回归测试。
 
 ---
 
-## 核心设计原则
+## 🎯 适合谁
 
-### 1. Brief 是中间层
+### 如果你只是想使用
 
-不要让“文章 → Prompt”直接发生。
+你只需要：
 
-先把任务写成结构化 Brief：
+1. 第一次运行初始化
+2. 提供文章
+3. 确认封面文案
+4. 提供需要保真的人物 / 产品 / Logo / 照片
+5. 让 Skill 完成生成与验收
 
-```text
-Article
-  ↓
-Cover Brief
-  ↓
-Prompt
-```
+**不需要先理解 JSON Schema、Prompt Compiler 或 F01～F10。**
 
-这样换模型、换生成后端、调整视觉规则时，不需要重新设计整个工作流。
+### 如果你要二次开发
 
-核心文件：
+再去看：
 
-- [references/cover-brief.md](references/cover-brief.md)
-- [references/cover-brief.schema.json](references/cover-brief.schema.json)
-- [tools/validate_brief.py](tools/validate_brief.py)
-
-### 2. Copy Lock 是唯一文案真相源
-
-封面最终允许出现哪些文字，只认：
-
-```json
-{
-  "copy": {
-    "status": "confirmed",
-    "allowed_text": [
-      "100件长期好物",
-      "戴了6年还在戴"
-    ]
-  }
-}
-```
-
-content 负责描述文章事实，copy.allowed_text 负责描述**画面允许出现的文字**。
-
-因此：
-
-> 没确认文案，不生成；生成后出现白名单之外的文字，判 FAIL。
-
-详见 [references/copy-contract.md](references/copy-contract.md)。
-
-### 3. 真实素材优先
-
-产品、Logo、旅行照片等不是“灵感参考”，而是**受保护的输入资产**。
-
-每个资产绑定一个机器可识别的 input：
-
-```json
-{
-  "id": "necklace",
-  "input": "image_3",
-  "kind": "real_product",
-  "fidelity": 2
-}
-```
-
-fidelity 越高，模型可修改的空间越小：
-
-| 等级 | 含义 | 典型素材 |
-|---|---|---|
-| 0 | 可近似 / 可风格化 | 装饰元素 |
-| 1 | 尽量保持 | 普通参考素材 |
-| 2 | 权威真实素材 | 产品、真人主体、旅行照片、截图 |
-| 3 | 严格不可改 | Logo、品牌资产 |
-
-详见 [references/asset-contract.md](references/asset-contract.md)。
-
-### 4. Failure Patch 是增量修复，不是重写
-
-如果 F03 判断“产品变形”，正确做法不是重新编译一套完全不同的 Prompt。
-
-而是：
-
-```text
-原始 asset_fidelity section
-        +
-F03 patch
-        ↓
-重新生成
-```
-
-原始的 image_3、image_4、fidelity 等信息必须保留。
-
-当前 F01～F10 的归因与 Patch 定义见 [references/failure-codes.json](references/failure-codes.json)。
+- `SKILL.md`
+- `references/`
+- `tools/`
+- `examples/`
 
 ---
 
-## 品牌基线
+# 🚀 5 分钟开始
 
-这是「秋秋很开心」当前封面的固定视觉基线。
-
-| 项目 | 规则 |
-|---|---|
-| 画布 | **2.35:1**，优先 1880×800 |
-| 主视觉 | 暖木色 × 复古像素 × 温馨工作台 |
-| 氛围 | 明亮、温暖、生活化 |
-| 人物 | 使用内置身份图，保持人物身份连续 |
-| 真实主体 | 产品 / Logo / 旅行照片优先使用真实素材 |
-| 文案 | 最多 3 组，最终以 Copy Lock 为准 |
-| 构图 | 根据文章类型选择 L01～L05 |
-| 风格融合 | 真人主体保持真实感，和像素环境融合 |
-| 禁止 | 换脸、美颜、虚构产品、虚构 Logo、未经确认的文字 |
-
-完整视觉规则不要在 README 重复维护，统一放在：
-
-- [references/identity-contract.md](references/identity-contract.md)
-- [references/style-guide.md](references/style-guide.md)
-- [references/layout-system.md](references/layout-system.md)
-- [references/copy-contract.md](references/copy-contract.md)
-- [references/asset-contract.md](references/asset-contract.md)
-
-README 负责告诉你**怎么用**；references 负责告诉系统**具体怎么执行**。
-
----
-
-## 快速开始
-
-### 1. 安装
+## 1. 获取 Skill
 
 ```bash
 git clone https://github.com/wangsiji/qiuqiu-wechat-cover.git
 cd qiuqiu-wechat-cover
 ```
 
-如果作为 Agent Skill 使用，以你的 Agent 所支持的 Skill 目录为准。例如 Hermes：
+如果你的 Agent 有自己的 Skill 目录，把整个目录放进去即可。
+
+例如：
 
 ```bash
 cp -r . ~/.hermes/skills/qiuqiu-wechat-cover
 ```
 
-### 2. 首次使用初始化
+---
 
-新用户第一次使用时，先运行：
+## 2. 第一次使用：先初始化
+
+第一次使用时运行：
 
 ```bash
 python3 tools/init.py
 ```
 
-这里会一次性确认：
+初始化只需要回答两个问题。
 
-- **人物身份**：使用默认「秋秋」人物，或替换为自己的真人身份图。
-- **Lovart 图片生成**：配置 Lovart，或暂不配置。
+### ① 人物身份
 
-Lovart 密钥只从环境变量读取，**不会写入 Skill、Git 或本地非敏感配置**：
+```text
+1. 使用默认「秋秋」人物
+2. 换成我自己的身份图
+```
+
+如果选择自定义，可以指定：
+
+```bash
+python3 tools/init.py \
+  --identity custom \
+  --identity-path /path/to/identity.jpg
+```
+
+默认人物素材：
+
+```text
+references/assets/qiuqiu-face-reference.jpg
+```
+
+默认风格参考：
+
+```text
+references/assets/qiuqiu-style-reference.png
+```
+
+### ② 是否使用 Lovart
+
+```text
+1. 配置 Lovart
+2. 暂时跳过
+```
+
+也可以直接：
+
+```bash
+python3 tools/init.py --identity default --lovart yes
+```
+
+或者暂时不配置：
+
+```bash
+python3 tools/init.py --identity default --lovart no
+```
+
+查看当前初始化状态：
+
+```bash
+python3 tools/init.py --check
+```
+
+> **初始化只在首次使用时做。**
+>
+> 后续生成封面不需要反复询问人物和 API Key。
+
+---
+
+## 3. 配置 Lovart（可选）
+
+如果你选择 Lovart，需要配置：
 
 ```bash
 export LOVART_ACCESS_KEY="ak_..."
 export LOVART_SECRET_KEY="sk_..."
 ```
 
-查看当前状态：
+然后检查：
 
 ```bash
 python3 tools/init.py --check
 ```
 
-完成初始化后，正常流程才从「文章 → Cover Brief」开始。
+### 🔐 安全规则
 
-### 2. 检查 Skill 包
+API Key：
 
-```bash
-python3 tools/validate_skill.py .
-```
+- 只从环境变量读取
+- 不写入 `config.json`
+- 不写入 Git
+- 不写入 Prompt
+- 不写入日志
 
-检查内容包括必需文件、相对链接、内置资产和后端相关完整性。
+**不要把真实 Key 放进 README、Brief、代码或仓库。**
 
-### 4. 检查内置品牌资产
+---
 
-```bash
-python3 tools/resolve_assets.py
-```
+# 🧩 你真正需要准备什么
 
-必须确认输出包含 ok: true，并确认身份图、风格图都能被当前运行环境真实读取。
+一次封面任务通常只需要四样东西：
 
-> 仅仅在 Prompt 里写“参考图 1 / 参考图 2”不代表模型真的收到了图片。生成前必须把图片作为当前图像工具支持的真实输入传入。
+### 1. 文章
 
-### 5. 准备 Cover Brief
+最好提供完整正文，而不是只给标题。
 
-可以直接从 [examples/sample-brief.json](examples/sample-brief.json) 开始。
+### 2. 封面文案
 
-最小结构：
+Skill 会先提出候选文案，确认后才锁定。
+
+最终画面允许出现的文字，只认：
 
 ```json
 {
-  "cover": {
-    "ratio": "2.35:1",
-    "size": "1880x800"
-  },
-  "content": {
-    "category": "product",
-    "topic": "随身配饰"
-  },
   "copy": {
     "status": "confirmed",
     "allowed_text": [
       "100件长期好物",
       "戴了6年还在戴"
     ]
-  },
-  "identity": {
-    "enabled": true,
-    "reference": "references/assets/qiuqiu-face-reference.jpg",
-    "mask": true
-  },
-  "style": {
-    "reference": "references/assets/qiuqiu-style-reference.png",
-    "pixel_ratio": 0.2
-  },
-  "layout": {
-    "template": "L02"
-  },
-  "assets": [
-    {
-      "id": "necklace",
-      "input": "image_3",
-      "kind": "real_product",
-      "fidelity": 2
-    }
-  ],
-  "constraints": {
-    "unauthorized_text": false,
-    "invented_products": false,
-    "invented_logos": false
   }
 }
 ```
 
-### 6. 校验 Brief
+### 3. 人物 / 真实素材
+
+例如：
+
+- 真人身份图
+- 产品照片
+- Logo
+- 旅行照片
+- App / 网页截图
+
+真实素材不是普通「参考图」，而是需要保护的输入资产。
+
+### 4. 文章主题
+
+例如：
+
+- 产品 / 好物
+- 旅行
+- AI
+- 个人生活
+- 教程
+- 对比测评
+
+Skill 会根据主题选择合适的构图模板。
+
+---
+
+# 🔄 完整工作流
+
+## Step 1：读文章
+
+先提炼：
+
+- 文章真正主题
+- 核心卖点 / 信息
+- 最值得放到封面的内容
+- 必须出现的真实对象
+- 是否需要人物
+- 是否需要产品 / Logo / 照片
+
+**不确定的事实不猜。**
+
+---
+
+## Step 2：确定封面方案
+
+先确定：
+
+1. 封面主题
+2. 短标题 / Hook
+3. 构图方向
+4. 需要哪些真实素材
+
+用户确认文案后，进入 Copy Lock。
+
+---
+
+## Step 3：建立 Cover Brief
+
+Cover Brief 是这次任务的**单一事实源**。
+
+它统一记录：
+
+- 画布
+- 文章主题
+- 最终文案
+- 人物身份
+- 风格
+- 构图
+- 真实素材
+- 约束
+
+因此后面的 Prompt、生成和验收都围绕同一份 Brief。
+
+详细说明：
+
+- [references/cover-brief.md](references/cover-brief.md)
+- [references/cover-brief.schema.json](references/cover-brief.schema.json)
+
+---
+
+## Step 4：校验
 
 ```bash
 python3 tools/validate_brief.py examples/sample-brief.json
 ```
 
-重点检查：
+不通过就不要进入生成阶段。
 
-- copy.status 是否为 confirmed
-- copy.allowed_text 是否为空 / 重复
-- layout.template 是否合法
-- category → template 是否匹配
-- asset id 是否唯一
-- asset input 是否唯一
-- input 是否符合 image_3、image_4… 格式
-- fidelity 是否达到素材类型要求
-- edit target 是否指向真实 asset
+---
 
-### 7. 编译 Prompt
+## Step 5：编译 Prompt
 
 ```bash
 python3 tools/compile_prompt.py \
@@ -322,7 +311,7 @@ python3 tools/compile_prompt.py \
   -o prompt.txt
 ```
 
-输出是一份按固定 section 组装的执行 Prompt：
+Prompt 会按照固定结构生成：
 
 ```text
 opener
@@ -337,7 +326,72 @@ negative
 edit
 ```
 
-### 8. 失败后定向修复
+---
+
+## Step 6：检查真实素材
+
+```bash
+python3 tools/resolve_assets.py
+```
+
+这一步确保 Skill 知道：
+
+> **哪些图片是真正要传给生成模型的输入，而不是只在 Prompt 里写一句“参考图”。**
+
+---
+
+## Step 7：生成
+
+当前仓库提供 Lovart Agent 通道。
+
+具体 Lovart 使用方式见：
+
+- [references/lovart-channel.md](references/lovart-channel.md)
+
+---
+
+## Step 8：验收
+
+先做机器检查：
+
+```bash
+python3 tools/validate_output.py path/to/generated.png
+```
+
+然后再进行视觉验收。
+
+重点检查：
+
+- 2.35:1 比例
+- 中文是否逐字正确
+- 人物身份是否一致
+- 产品是否变形
+- Logo 是否失真
+- 真实照片是否被错误重绘
+- 构图是否清晰
+- 风格是否统一
+- 是否准确表达文章主题
+
+---
+
+## Step 9：失败就分类修复
+
+不要简单地「再生成一张」。
+
+先判断问题属于哪一类：
+
+| Code | 问题 |
+|---|---|
+| F01 | 人物身份漂移 |
+| F02 | 中文错字 / 多余文字 |
+| F03 | 产品变形 |
+| F04 | Logo 失真 |
+| F05 | 构图拥挤 / 比例失衡 |
+| F06 | 主题不明确 |
+| F07 | 画面过暗 |
+| F08 | 未授权文字 |
+| F09 | 比例错误 |
+| F10 | 风格漂移 |
 
 例如产品变形：
 
@@ -345,204 +399,112 @@ edit
 python3 tools/compile_prompt.py \
   examples/sample-brief.json \
   --failure F03 \
-  -o prompt-f03.txt
+  -o retry.txt
 ```
 
-F03 只向 asset_fidelity section 注入修复指令，同时保留原有资产绑定和 fidelity 信息。
+Failure Patch 的原则是：
 
-| Code | 问题 | Patch 归因 |
-|---|---|---|
-| F01 | 人物身份漂移 | ref_roles |
-| F02 | 中文错字 / 多余文字 | copy |
-| F03 | 产品变形 | asset_fidelity |
-| F04 | Logo 失真 | asset_fidelity |
-| F05 | 构图拥挤 / 比例失衡 | layout |
-| F06 | 主题不明确 | article |
-| F07 | 画面过暗 | style |
-| F08 | 未授权文字 | copy |
-| F09 | 比例错误 | opener |
-| F10 | 风格漂移 | style |
-
-完整定义见 [references/failure-codes.md](references/failure-codes.md)。
-
-### 9. 机器验收
-
-生成图片后：
-
-```bash
-python3 tools/validate_output.py path/to/generated.png
+```text
+保留原 Prompt
+     +
+只追加对应问题的修复指令
+     ↓
+重新生成
 ```
 
-当前机器验收负责：
+这样可以尽量避免「修了产品，又把人物修坏」。
 
-- 文件存在
-- 文件非空
-- PNG / JPEG 可识别
-- 能读取尺寸
-- 宽高比例接近 2.35:1
+完整规则：
 
-它**不会假装替代视觉判断**。
-
-人物是否像、中文是否逐字正确、产品有没有变形、构图是否舒服，仍然需要人工或视觉模型验收。
+- [references/failure-codes.md](references/failure-codes.md)
+- [references/failure-codes.json](references/failure-codes.json)
 
 ---
 
-## 完整生产工作流
+# 🎨 当前品牌基线
 
-### Step 1：读取文章
+当前内置示例以「秋秋很开心」的视觉体系为基准：
 
-输入必须是完整正文，不能只凭标题猜。
+| 项目 | 基线 |
+|---|---|
+| 比例 | **2.35:1** |
+| 推荐尺寸 | **1880×800** |
+| 主视觉 | 暖木色 × 复古像素 × 温馨工作台 |
+| 氛围 | 明亮、温暖、生活化 |
+| 人物 | 保持身份连续，不随意换脸 |
+| 产品 / Logo | 优先使用真实素材 |
+| 文案 | 最多 3 组，以 Copy Lock 为准 |
+| 构图 | L01～L05 |
+| 禁止 | 换脸、美颜、虚构产品、虚构 Logo、未经确认的文字 |
 
-提炼：
+具体规则不在 README 重复维护，统一放在：
 
-- 文章真正主题
-- 用户为什么值得点击
-- 一个核心数字 / 结果 / 冲突
-- 必须真实呈现的对象
-- 是否需要真人
-- 是否需要产品 / Logo / 旅行照片
+- [references/identity-contract.md](references/identity-contract.md)
+- [references/style-guide.md](references/style-guide.md)
+- [references/layout-system.md](references/layout-system.md)
+- [references/copy-contract.md](references/copy-contract.md)
+- [references/asset-contract.md](references/asset-contract.md)
 
-如果关键事实缺失：
+---
 
-> 停在当前阶段，标记「待确认」，不要猜。
+# 🛠️ 常用命令
 
-### Step 2：提出封面方案
-
-先输出：
-
-1. 主题判断
-2. 3 个短钩子
-3. 推荐构图
-4. 待确认素材
-
-用户确认文案后，才写入：
-
-```json
-"copy": {
-  "status": "confirmed",
-  "allowed_text": [...]
-}
-```
-
-### Step 3：建立 Brief
-
-把最终决策写进 Cover Brief。
-
-此时 Brief 成为：
-
-> **这一次封面任务的单一事实源。**
-
-### Step 4：校验
+### 初始化
 
 ```bash
-python3 tools/validate_brief.py <brief.json>
+python3 tools/init.py
 ```
 
-不通过，不生成。
-
-### Step 5：编译
+### 查看初始化状态
 
 ```bash
-python3 tools/compile_prompt.py <brief.json> -o prompt.txt
+python3 tools/init.py --check
 ```
 
-### Step 6：真实加载参考图
+### 检查 Skill
+
+```bash
+python3 tools/validate_skill.py .
+```
+
+### 检查 Brief
+
+```bash
+python3 tools/validate_brief.py examples/sample-brief.json
+```
+
+### 编译 Prompt
+
+```bash
+python3 tools/compile_prompt.py \
+  examples/sample-brief.json \
+  -o prompt.txt
+```
+
+### 生成失败后的定向修复
+
+```bash
+python3 tools/compile_prompt.py \
+  examples/sample-brief.json \
+  --failure F03 \
+  -o retry.txt
+```
+
+### 检查内置素材
 
 ```bash
 python3 tools/resolve_assets.py
 ```
 
-确认内置身份图和风格图真正作为图片输入进入生成后端。
-
-### Step 7：生成
-
-当前仓库提供 Lovart Agent 通道实现。
-
-具体 API、项目 / thread、attachment 上传方式和已知限制见：
-
-[references/lovart-channel.md](references/lovart-channel.md)
-
-不要把“Prompt 已生成”描述成“图片已生成”。
-
-### Step 8：验收
-
-先机器验收：
+### 检查生成图片
 
 ```bash
-python3 tools/validate_output.py <generated-image>
+python3 tools/validate_output.py path/to/generated.png
 ```
-
-再进行视觉验收：
-
-- 比例
-- 中文文字
-- 人物身份
-- 产品 / Logo / 旅行照
-- 构图层级
-- 明度
-- 风格一致性
-- 与正文主题的一致性
-
-### Step 9：失败就分类
-
-不要一句“这张不太对”重新生成。
-
-先判断：
-
-```text
-人物问题 → F01
-文字问题 → F02 / F08
-产品问题 → F03
-Logo 问题 → F04
-构图问题 → F05
-主题问题 → F06
-明度问题 → F07
-比例问题 → F09
-风格问题 → F10
-```
-
-然后：
-
-```bash
-python3 tools/compile_prompt.py <brief.json> --failure F03 -o retry.txt
-```
-
-这样可以最大限度保持其他已经正确的部分不变。
 
 ---
 
-## Prompt Compiler
-
-tools/compile_prompt.py 是整个执行层的关键。
-
-它把 Brief 编译成固定 section：
-
-```text
-opener
-article
-copy
-ref_roles
-asset_fidelity
-style
-layout
-typography
-negative
-edit
-```
-
-Failure Patch 不直接替换 section，而是：
-
-```text
-BASE SECTION
-+
-FAILURE PATCH
-```
-
-因此可以做 section-level regression test，避免“修产品把人物也修坏”的连锁污染。
-
----
-
-## 测试与 CI
+# 🧪 测试
 
 本地完整检查：
 
@@ -554,195 +516,198 @@ python3 tools/test_failure_patches.py
 python3 tools/test_init.py
 ```
 
-GitHub Actions 会自动执行核心验证链：
+GitHub Actions 会自动验证：
 
-- Skill package validation
-- Sample Cover Brief validation
-- Prompt compilation smoke test
-- F01～F10 Failure Patch section regression
+- Skill 包结构
+- Sample Brief
+- Prompt 编译
+- F01～F10 Failure Patch
+- 首次初始化流程
 
-Workflow：
+CI：
 
-[.github/workflows/validate.yml](.github/workflows/validate.yml)
-
-Failure Patch regression：
-
-[tools/test_failure_patches.py](tools/test_failure_patches.py)
+- [.github/workflows/validate.yml](.github/workflows/validate.yml)
 
 ---
 
-## 项目结构
+# 📁 项目结构
 
 ```text
 qiuqiu-wechat-cover/
 │
-├── SKILL.md                         # Agent Skill 主入口
-├── README.md                        # 项目使用入口
+├── SKILL.md
+├── README.md
 ├── LICENSE
 ├── NOTICE
 │
 ├── agents/
-│   └── openai.yaml                  # Agent / UI 配置
+│   └── openai.yaml
 │
 ├── references/
-│   ├── workflow.md                  # 完整工作流协议
-│   ├── cover-brief.md               # Cover Brief 数据契约
-│   ├── cover-brief.schema.json      # JSON Schema
-│   ├── identity-contract.md         # 人物身份约束
-│   ├── asset-contract.md            # 素材保护等级
-│   ├── copy-contract.md             # Copy Lock
-│   ├── layout-system.md             # L01～L05 构图系统
-│   ├── style-guide.md               # 品牌视觉规范
-│   ├── prompt-template.md            # Prompt 规范
-│   ├── prompt-checklist.md           # 验收清单
-│   ├── failure-codes.md              # F01～F10 说明
-│   ├── failure-codes.json            # Failure Patch 数据源
-│   ├── lovart-channel.md             # Lovart 通道说明
+│   ├── workflow.md
+│   ├── cover-brief.md
+│   ├── cover-brief.schema.json
+│   ├── identity-contract.md
+│   ├── asset-contract.md
+│   ├── copy-contract.md
+│   ├── layout-system.md
+│   ├── style-guide.md
+│   ├── prompt-template.md
+│   ├── prompt-checklist.md
+│   ├── failure-codes.md
+│   ├── failure-codes.json
+│   ├── lovart-channel.md
 │   └── assets/
 │       ├── qiuqiu-face-reference.jpg
 │       └── qiuqiu-style-reference.png
 │
 ├── tools/
-│   ├── resolve_assets.py             # 内置资产检查
-│   ├── validate_brief.py             # Brief / 业务规则校验
-│   ├── compile_prompt.py             # Brief → Prompt
-│   ├── validate_output.py            # 生成图机器验收
-│   ├── validate_skill.py             # Skill 包完整性校验
-│   ├── test_failure_patches.py       # F01～F10 回归测试
-│   ├── init.py                        # 首次使用初始化
-│   └── test_init.py                   # 初始化回归测试
-│   └── lovart-agent.py               # Lovart Agent 通道
+│   ├── init.py
+│   ├── test_init.py
+│   ├── resolve_assets.py
+│   ├── validate_skill.py
+│   ├── validate_brief.py
+│   ├── compile_prompt.py
+│   ├── validate_output.py
+│   ├── test_failure_patches.py
+│   └── lovart-agent.py
 │
 ├── examples/
-│   ├── sample-brief.json             # 最小可运行 Brief
-│   └── ai-agent-cover.md             # 完整案例
+│   ├── sample-brief.json
+│   └── ai-agent-cover.md
 │
 └── .github/
     └── workflows/
-        └── validate.yml              # CI
+        └── validate.yml
 ```
 
 ---
 
-## References 怎么看
+# 📚 从哪里开始看
 
-如果你只是**使用**这个 Skill：
+### 只是使用
 
-1. SKILL.md
-2. README.md
-3. examples/sample-brief.json
+按这个顺序：
 
-如果你要**修改规则**：
+1. **README.md**
+2. **SKILL.md**
+3. **examples/sample-brief.json**
 
-1. references/cover-brief.md
-2. references/copy-contract.md
-3. references/asset-contract.md
-4. references/layout-system.md
-5. references/style-guide.md
+### 想修改视觉规则
 
-如果你要**修改执行层**：
+看：
 
-1. tools/validate_brief.py
-2. tools/compile_prompt.py
-3. tools/validate_output.py
-4. tools/test_failure_patches.py
+1. `references/identity-contract.md`
+2. `references/style-guide.md`
+3. `references/layout-system.md`
+4. `references/copy-contract.md`
+5. `references/asset-contract.md`
 
-如果你要**换生成后端**：
+### 想修改执行逻辑
 
-1. 保留 Cover Brief
-2. 保留品牌 contracts
-3. 保留 Prompt Compiler 的 section 结构
-4. 替换 / 新增 backend adapter
-5. 不要把品牌逻辑重新写进后端代码
+看：
 
-核心架构就是：
+1. `tools/validate_brief.py`
+2. `tools/compile_prompt.py`
+3. `tools/validate_output.py`
+4. `tools/test_failure_patches.py`
 
-> **品牌逻辑与生成后端解耦。**
+### 想更换图片生成后端
+
+保留：
+
+```text
+Cover Brief
+    +
+Brand Contracts
+    +
+Prompt Sections
+```
+
+只替换 / 新增后端 Adapter。
+
+**不要把品牌规则重新写进生成后端。**
 
 ---
 
-## 常见问题
+# ❓ FAQ
+
+### 第一次使用一定要换人物吗？
+
+不需要。
+
+默认直接使用内置「秋秋」身份图；如果你做自己的账号，可以在初始化时选择自定义身份图。
+
+### 每次生成都要输入人物图吗？
+
+不需要重复配置。
+
+首次初始化后，人物身份会作为默认配置。
+
+### Lovart 是必须的吗？
+
+不是。
+
+Skill 的核心是 Brief、规则、Prompt 编译和验收体系。Lovart 是当前提供的图片生成通道之一。
+
+### API Key 会不会被保存到仓库？
+
+不会。
+
+Lovart Key 只从环境变量读取。
 
 ### 为什么不直接写一个超长 Prompt？
 
-因为长 Prompt 解决不了：
+因为单个 Prompt 很难稳定解决：
 
-- 文案到底哪个是真的？
-- 产品输入到底是哪张图？
-- 修改产品时是否误伤人物？
-- 失败后到底改了哪一层？
-- 下一次生成能不能复现？
-- 代码修改后有没有回归测试？
+- 文案锁定
+- 人物身份
+- 真实素材保护
+- 构图约束
+- 失败后的局部修复
+- 回归测试
 
-所以这里把这些问题分别交给：
+所以这里把这些职责拆开：
 
 ```text
 Brief
 Copy Lock
+Identity Contract
 Asset Contract
+Prompt Compiler
 Failure Patch
 Regression Test
 ```
 
 ### 为什么一定要先确认文案？
 
-因为图片模型对中文字符的生成并不可靠。
+因为图片模型生成中文字符并不可靠。
 
-这个 Skill 的策略不是“祈祷模型一次写对”，而是：
+这个 Skill 的策略是：
 
-> **先锁白名单，再验收结果。**
+> **先锁定允许出现的文字，再验收最终图片。**
 
-### 为什么产品要有 fidelity？
+### 为什么真实产品要有 fidelity？
 
-因为“参考一下产品”和“原样使用这个产品”是两种完全不同的生成要求。
+因为「参考一下产品」和「必须保持这个产品真实外观」是两种不同的任务。
 
-fidelity = 2 表示真实主体必须被保护，模型只能在构图层面调整位置 / 尺寸，而不是重新设计产品。
-
-### 为什么失败后不能直接重新生成？
-
-当然可以，但那样会把已经正确的部分一起重新随机化。
-
-Failure Patch 的目的就是：
-
-> **只修错的地方，尽量不动对的地方。**
-
-### 为什么 README 不写所有视觉细节？
-
-因为 README 是入口，不应该成为第二份规则库。
-
-GitHub 官方建议 README 聚焦项目用途、快速开始和导航；更详细的长期文档应放到独立文档中。citeturn0search0turn0search8
-
-因此这里采用：
-
-```text
-README
-  ↓
-告诉你怎么用
-  ↓
-references
-  ↓
-告诉系统具体规则
-  ↓
-tools
-  ↓
-真正执行
-```
+fidelity 越高，对真实外观的保护要求越高。
 
 ---
 
-## 示例
+# 📦 示例
 
-- [examples/ai-agent-cover.md](examples/ai-agent-cover.md) — 从文章分析到封面生成的完整案例
-- [examples/sample-brief.json](examples/sample-brief.json) — 最小 Cover Brief
-- [examples/cover-japan-12days.png](examples/cover-japan-12days.png) — 2.35:1 实际封面示例
+- [examples/ai-agent-cover.md](examples/ai-agent-cover.md) — 完整案例
+- [examples/sample-brief.json](examples/sample-brief.json) — 最小 Brief
+- [examples/cover-japan-12days.png](examples/cover-japan-12days.png) — 实际封面示例
 
 ---
 
-## 许可
+# 📄 License
 
-[MIT](LICENSE)
+MIT。
 
-tools/lovart-agent.py 基于 [lovartai/lovart-skill](https://github.com/lovartai/lovart-skill)，同样遵循 MIT；具体归属见 NOTICE。
+`tools/lovart-agent.py` 基于 [lovartai/lovart-skill](https://github.com/lovartai/lovart-skill)，具体归属见 [NOTICE](NOTICE)。
 
 ---
 
