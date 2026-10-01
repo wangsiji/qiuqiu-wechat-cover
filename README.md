@@ -6,6 +6,18 @@
 
 ---
 
+## Examples
+
+同一套方法，可以用于好物、生活方式、旅行等不同类型的公众号内容。
+
+<p align="center">
+  <img src="examples/cover-case-01.jpg" alt="好物封面案例" width="32%"/>
+  <img src="examples/cover-case-02.jpg" alt="生活方式封面案例" width="32%"/>
+  <img src="examples/cover-japan-12days.png" alt="日本十二日旅行封面" width="32%"/>
+</p>
+
+---
+
 ## Core Capabilities
 
 - **文章理解** —— 从正文提炼主题、点击钩子与真实主体，而不是拿到就生成。
