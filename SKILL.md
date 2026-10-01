@@ -16,10 +16,10 @@ description: >
 按 [references/workflow.md](references/workflow.md) 执行以下阶段。核心是把每次任务的判断先落成 **Cover Brief**（结构化中间层，见 [references/cover-brief.md](references/cover-brief.md)），再编译成提示词——换后端/换模型时品牌逻辑不重写：
 
 1. **收集**：先要完整文章（正文、Markdown 内容或可读取的本地路径），再确认需要的图片。
-2. **分析**：从正文提取主题、点击理由、一个核心数字/结果/冲突，以及必须真实呈现的对象，产出 `content.*`、`layout.template` 与 `assets.*`（Cover Brief）。
-3. **提案**：给出 3 个短钩子和 1 个构图建议；用户未确认文案时不生成图片。
-4. **生成或编辑**：用户明确说“生成/跑图”才调用图像工具；先加载并验证内置资产，再注入参考图；局部修改遵守最小变更。
-5. **验收**：检查比例、中文文字、人物身份、真实素材、明度和正文一致性，报告不确定项。
+2. **分析**：从正文提取主题、点击理由、一个核心数字/结果/冲突，以及必须真实呈现的对象，产出 Cover Brief（`content.*`、`copy.allowed_text`、`layout.template` 与 `assets.*`）。用 `python3 tools/validate_brief.py <brief.json>` 校验契约（Copy Lock 必须 `confirmed`、fidelity 0–3、layout 合法）。
+3. **提案**：给出 3 个短钩子和 1 个构图建议；用户确认后才把最终文案锁进 `copy.allowed_text`（`copy.status = confirmed`）；用户未确认文案时不生成图片。
+4. **编译与生成**：`python3 tools/compile_prompt.py <brief.json> -o prompt.txt` 编译出提示词（Copy Lock 只读 `copy.allowed_text`）；调用 Lovart 前先 `resolve_assets.py` 加载内置资产；用户明确说“生成/跑图”才调用图像工具；局部修改遵守最小变更。
+5. **验收**：`python3 tools/validate_output.py <out.png>` 过机器项（存在/可解码/尺寸/比例 F09），再加人工验收（比例、中文文字、人物身份、真实素材、明度和正文一致性），报告不确定项。
 
 文章路径不可读取、正文不完整或关键事实缺失时，暂停在当前阶段并标记「待确认」，不要凭标题或常识补写。
 
@@ -71,7 +71,7 @@ python3 tools/resolve_assets.py
 - 构图按文章类型选 [references/layout-system.md](references/layout-system.md) 的编号模板（L01-L05），人物和道具不得遮挡标题、关键数字、产品或 Logo。
 - 文字最多 3 组（小钩子、主标题、可选补充），整张约 20～35 个汉字；主标题是唯一视觉焦点，不塞功能清单。
 - 有真人照片时保持约 80% 真实感 + 20% 像素融合，不得换脸、娃娃脸、过度美颜、彻底像素化；**默认保留口罩**，只有用户明确才能摘掉。
-- 真实的产品、Logo、旅行照优先原样使用；未提供的未确认事实不得编造。其保护等级见 [references/identity-contract.md](references/identity-contract.md)（Identity 层不可变 + Asset Fidelity：产品=2 / Logo=3）。文字只允许确认过的白名单，见 [references/copy-contract.md](references/copy-contract.md) 的 Copy Lock。
+- 真实的产品、Logo、旅行照优先原样使用；未提供的未确认事实不得编造。**人物身份**约束见 [references/identity-contract.md](references/identity-contract.md)；**素材保护等级**（产品=2 / Logo=3，见 `assets[].fidelity`）见 [references/asset-contract.md](references/asset-contract.md)。文字只允许确认过的白名单，见 [references/copy-contract.md](references/copy-contract.md) 的 Copy Lock。
 
 详细的视觉参数见 [references/style-guide.md](references/style-guide.md)，Cover Brief 编译成提示词见 [references/prompt-template.md](references/prompt-template.md)，验收与失败分类见 [references/prompt-checklist.md](references/prompt-checklist.md)。
 
@@ -102,5 +102,5 @@ python3 tools/resolve_assets.py
 
 ## Lovart 出图通道（默认执行后端）
 
-本 Skill 的实际出图走 Lovart Agent API：内置参考图经 `tools/lovart-agent.py`（纯标准库、已随包分发）upload 成 CDN URL 后作为 `--attachments` 注入提示词生图。免费跑通键是 `set-mode --unlimited`（排队换额度，不扣积分）。完整命令、项目/线程、已知坑与验收见 [references/lovart-channel.md](references/lovart-channel.md)。执行顺序：`resolve_assets.py` 验资产 → 内置两图 upload 拿 URL → `chat --project-id <从 projects --json 取>`。
+本 Skill 的实际出图走 Lovart Agent API：先用 `tools/compile_prompt.py` 把 Cover Brief 编译成提示词，内置参考图经 `tools/lovart-agent.py`（纯标准库、已随包分发）upload 成 CDN URL 后作为 `--attachments` 注入提示词生图。免费跑通键是 `set-mode --unlimited`（排队换额度，不扣积分）。完整命令、项目/线程、已知坑与验收见 [references/lovart-channel.md](references/lovart-channel.md)。执行顺序：`validate_brief.py` 校验 → `compile_prompt.py` 出提示词 → `resolve_assets.py` 验资产 → 内置两图 upload 拿 URL → `chat --project-id <从 projects --json 取>` → `validate_output.py` 机器验收。
 
