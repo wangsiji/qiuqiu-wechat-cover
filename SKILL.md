@@ -11,21 +11,55 @@ description: >
 
 这是一套可复用的品牌封面工作流。每次只替换文章主题、封面文案和真实主体，保持固定的视觉识别。
 
+## 首次使用：先完成一次初始化
+
+新用户第一次使用本 Skill 时，**不要直接进入文章分析**。先确认两件事：
+
+1. **人物身份**：使用 Skill 内置的默认「秋秋」人物，还是替换成用户自己的真人身份图。
+2. **图片生成后端**：是否使用 Lovart.ai；如果使用，当前运行环境是否已经配置 Lovart 密钥。
+
+推荐运行：
+
+```bash
+python3 tools/init.py
+```
+
+初始化只保存非敏感配置到 `~/.qiuqiu-wechat-cover/config.json`。Lovart 密钥**永远不写入该文件、仓库或日志**，只从环境变量读取：
+
+```bash
+export LOVART_ACCESS_KEY="ak_..."
+export LOVART_SECRET_KEY="sk_..."
+```
+
+自定义人物可直接运行：
+
+```bash
+python3 tools/init.py --identity custom --identity-path /path/to/identity.jpg --lovart yes
+```
+
+暂不配置 Lovart：
+
+```bash
+python3 tools/init.py --identity default --lovart no
+```
+
+初始化完成后，不再重复询问；只有用户明确要求替换人物或重新配置生成后端时才重新运行。
+
 ## 工作流
 
 按 [references/workflow.md](references/workflow.md) 执行以下阶段。核心是把每次任务的判断先落成 **Cover Brief**（结构化中间层，见 [references/cover-brief.md](references/cover-brief.md)），再编译成提示词——换后端/换模型时品牌逻辑不重写：
 
-1. **收集**：先要完整文章（正文、Markdown 内容或可读取的本地路径），再确认需要的图片。
-2. **分析**：从正文提取主题、点击理由、一个核心数字/结果/冲突，以及必须真实呈现的对象，产出 Cover Brief（`content.*`、`copy.allowed_text`、`layout.template` 与 `assets.*`）。用 `python3 tools/validate_brief.py <brief.json>` 校验契约（Copy Lock 必须 `confirmed`、fidelity 0–3、layout 合法）。
-3. **提案**：给出 3 个短钩子和 1 个构图建议；用户确认后才把最终文案锁进 `copy.allowed_text`（`copy.status = confirmed`）；用户未确认文案时不生成图片。
-4. **编译与生成**：`python3 tools/compile_prompt.py <brief.json> -o prompt.txt` 编译出提示词（Copy Lock 只读 `copy.allowed_text`）；调用 Lovart 前先 `resolve_assets.py` 加载内置资产；用户明确说“生成/跑图”才调用图像工具；局部修改遵守最小变更。
-5. **验收**：`python3 tools/validate_output.py <out.png>` 过机器项（存在/可解码/尺寸/比例 F09），再加人工验收（比例、中文文字、人物身份、真实素材、明度和正文一致性），报告不确定项。
+1. **初始化（仅首次）**：确认人物身份与 Lovart 配置；未初始化先暂停。\n2. **收集**：先要完整文章（正文、Markdown 内容或可读取的本地路径），再确认需要的图片。
+3. **分析**：从正文提取主题、点击理由、一个核心数字/结果/冲突，以及必须真实呈现的对象，产出 Cover Brief（`content.*`、`copy.allowed_text`、`layout.template` 与 `assets.*`）。用 `python3 tools/validate_brief.py <brief.json>` 校验契约（Copy Lock 必须 `confirmed`、fidelity 0–3、layout 合法）。
+4. **提案**：给出 3 个短钩子和 1 个构图建议；用户确认后才把最终文案锁进 `copy.allowed_text`（`copy.status = confirmed`）；用户未确认文案时不生成图片。
+5. **编译与生成**：`python3 tools/compile_prompt.py <brief.json> -o prompt.txt` 编译出提示词（Copy Lock 只读 `copy.allowed_text`）；调用 Lovart 前先 `resolve_assets.py` 加载内置资产；用户明确说“生成/跑图”才调用图像工具；局部修改遵守最小变更。
+6. **验收**：`python3 tools/validate_output.py <out.png>` 过机器项（存在/可解码/尺寸/比例 F09），再加人工验收（比例、中文文字、人物身份、真实素材、明度和正文一致性），报告不确定项。
 
 文章路径不可读取、正文不完整或关键事实缺失时，暂停在当前阶段并标记「待确认」，不要凭标题或常识补写。
 
 ## 内置品牌资产协议
 
-本 Skill 自带两个固定品牌资产，属于 Skill 自身，不是每次任务需要用户重复提供的输入：
+本 Skill 自带一个固定风格资产；身份图由首次初始化选择。默认身份资产属于 Skill 自身，不是每次任务需要用户重复提供的输入：
 
 - `references/assets/qiuqiu-face-reference.jpg`，角色：图 1（身份），用途：秋秋真人身份参考（当前为其一版经确认的封面裁切人脸，生成/编辑时必须保持不变——不得换脸、美颜、改年龄或改发型）
 - `references/assets/qiuqiu-style-reference.png`，角色：图 2（风格），用途：公众号封面整体视觉风格参考
@@ -102,5 +136,5 @@ python3 tools/resolve_assets.py
 
 ## Lovart 出图通道（默认执行后端）
 
-本 Skill 的实际出图走 Lovart Agent API：先用 `tools/compile_prompt.py` 把 Cover Brief 编译成提示词，内置参考图经 `tools/lovart-agent.py`（纯标准库、已随包分发）upload 成 CDN URL 后作为 `--attachments` 注入提示词生图。免费跑通键是 `set-mode --unlimited`（排队换额度，不扣积分）。完整命令、项目/线程、已知坑与验收见 [references/lovart-channel.md](references/lovart-channel.md)。执行顺序：`validate_brief.py` 校验 → `compile_prompt.py` 出提示词 → `resolve_assets.py` 验资产 → 内置两图 upload 拿 URL → `chat --project-id <从 projects --json 取>` → `validate_output.py` 机器验收。
+本 Skill 的实际出图走 Lovart Agent API。Lovart 密钥只从 `LOVART_ACCESS_KEY` / `LOVART_SECRET_KEY` 环境变量读取，`tools/init.py` 不保存密钥。先用 `tools/compile_prompt.py` 把 Cover Brief 编译成提示词，内置参考图经 `tools/lovart-agent.py`（纯标准库、已随包分发）upload 成 CDN URL 后作为 `--attachments` 注入提示词生图。免费跑通键是 `set-mode --unlimited`（排队换额度，不扣积分）。完整命令、项目/线程、已知坑与验收见 [references/lovart-channel.md](references/lovart-channel.md)。执行顺序：`validate_brief.py` 校验 → `compile_prompt.py` 出提示词 → `resolve_assets.py` 验资产 → 内置两图 upload 拿 URL → `chat --project-id <从 projects --json 取>` → `validate_output.py` 机器验收。
 
