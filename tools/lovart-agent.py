@@ -946,6 +946,18 @@ def main():
                 if idx:
                     skill = AgentSkill(base_url=args.base_url, access_key=ak,
                                        secret_key=sk, timeout=args.timeout)
+                    # A backup account may not see the primary's project id.
+                    # If the id is invisible to this key, create one for it so
+                    # the fallback actually completes instead of dying on a
+                    # stale/missing project reference.
+                    try:
+                        has_proj = bool(project_id) and skill.validate_project(project_id)
+                    except AgentSkillError:
+                        has_proj = False
+                    if not has_proj:
+                        project_id = skill.create_project()
+                        print(f"backup key has no access to project; auto-created {project_id}.",
+                              file=sys.stderr)
                 try:
                     result = skill.chat(prompt=args.prompt, project_id=project_id,
                                         attachments=args.attachments, thread_id=args.thread_id,
