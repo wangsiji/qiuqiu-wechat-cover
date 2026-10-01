@@ -199,6 +199,34 @@ cd qiuqiu-wechat-cover
 cp -r . ~/.hermes/skills/qiuqiu-wechat-cover
 ```
 
+### 2. 首次使用初始化
+
+新用户第一次使用时，先运行：
+
+```bash
+python3 tools/init.py
+```
+
+这里会一次性确认：
+
+- **人物身份**：使用默认「秋秋」人物，或替换为自己的真人身份图。
+- **Lovart 图片生成**：配置 Lovart，或暂不配置。
+
+Lovart 密钥只从环境变量读取，**不会写入 Skill、Git 或本地非敏感配置**：
+
+```bash
+export LOVART_ACCESS_KEY="ak_..."
+export LOVART_SECRET_KEY="sk_..."
+```
+
+查看当前状态：
+
+```bash
+python3 tools/init.py --check
+```
+
+完成初始化后，正常流程才从「文章 → Cover Brief」开始。
+
 ### 2. 检查 Skill 包
 
 ```bash
@@ -207,7 +235,7 @@ python3 tools/validate_skill.py .
 
 检查内容包括必需文件、相对链接、内置资产和后端相关完整性。
 
-### 3. 检查内置品牌资产
+### 4. 检查内置品牌资产
 
 ```bash
 python3 tools/resolve_assets.py
@@ -217,7 +245,7 @@ python3 tools/resolve_assets.py
 
 > 仅仅在 Prompt 里写“参考图 1 / 参考图 2”不代表模型真的收到了图片。生成前必须把图片作为当前图像工具支持的真实输入传入。
 
-### 4. 准备 Cover Brief
+### 5. 准备 Cover Brief
 
 可以直接从 [examples/sample-brief.json](examples/sample-brief.json) 开始。
 
@@ -268,7 +296,7 @@ python3 tools/resolve_assets.py
 }
 ```
 
-### 5. 校验 Brief
+### 6. 校验 Brief
 
 ```bash
 python3 tools/validate_brief.py examples/sample-brief.json
@@ -286,7 +314,7 @@ python3 tools/validate_brief.py examples/sample-brief.json
 - fidelity 是否达到素材类型要求
 - edit target 是否指向真实 asset
 
-### 6. 编译 Prompt
+### 7. 编译 Prompt
 
 ```bash
 python3 tools/compile_prompt.py \
@@ -309,7 +337,7 @@ negative
 edit
 ```
 
-### 7. 失败后定向修复
+### 8. 失败后定向修复
 
 例如产品变形：
 
@@ -337,7 +365,7 @@ F03 只向 asset_fidelity section 注入修复指令，同时保留原有资产�
 
 完整定义见 [references/failure-codes.md](references/failure-codes.md)。
 
-### 8. 机器验收
+### 9. 机器验收
 
 生成图片后：
 
@@ -523,6 +551,7 @@ python3 tools/validate_skill.py .
 python3 tools/validate_brief.py examples/sample-brief.json
 python3 tools/compile_prompt.py examples/sample-brief.json -o /tmp/sample-prompt.txt
 python3 tools/test_failure_patches.py
+python3 tools/test_init.py
 ```
 
 GitHub Actions 会自动执行核心验证链：
@@ -580,6 +609,8 @@ qiuqiu-wechat-cover/
 │   ├── validate_output.py            # 生成图机器验收
 │   ├── validate_skill.py             # Skill 包完整性校验
 │   ├── test_failure_patches.py       # F01～F10 回归测试
+│   ├── init.py                        # 首次使用初始化
+│   └── test_init.py                   # 初始化回归测试
 │   └── lovart-agent.py               # Lovart Agent 通道
 │
 ├── examples/
