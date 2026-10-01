@@ -1,0 +1,42 @@
+{
+  "F01": {
+    "section": "ref_roles",
+    "patch": "FACE: freeze exactly to Image 1 identity reference. Do NOT reface, age-shift, beautify, or let the person drift. All references keep their assigned roles."
+  },
+  "F02": {
+    "section": "copy",
+    "patch": "COPY LOCK RE-CHECK: the image must contain ONLY the allowed_text whitelist, verbatim, no extra/fake Chinese, no typos. Fix any wrong or extra character."
+  },
+  "F03": {
+    "section": "asset_fidelity",
+    "patch": "Product integrity: treat each level>=2 supplied asset as authoritative. Do NOT redraw, recolor, deform or replace it; only reposition/rescale."
+  },
+  "F04": {
+    "section": "asset_fidelity",
+    "patch": "Logo integrity: the brand asset (level 3) is authoritative. Do NOT redraw, restyle or modify the logo mark or text. Keep it exact."
+  },
+  "F05": {
+    "section": "layout",
+    "patch": "Composition: keep the template proportions strictly; add spacing, stop overcrowding, keep headline/product/person from overlapping."
+  },
+  "F06": {
+    "section": "article",
+    "patch": "Hone the visual concept so the single headline topic reads unmistakably; cut styling that competes with the subject."
+  },
+  "F07": {
+    "section": "style",
+    "patch": "Brightening: raise warmth/lighting, avoid dark/cyber-techno grading. Keep the warm pixel style."
+  },
+  "F08": {
+    "section": "copy",
+    "patch": "Remove every unauthorized character/word; the result may only contain allowed_text, nothing else anywhere in the frame."
+  },
+  "F09": {
+    "section": "ratio",
+    "patch": "Strict 2.35:1 canvas. Re-frame, do NOT letterbox or stretch; regenerate at the requested aspect."
+  },
+  "F10": {
+    "section": "style",
+    "patch": "Style drift: hold the fixed brand style (warm wood pixel, cozy bright); do not veer into cyber-dark or photorealism-only."
+  }
+}

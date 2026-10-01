@@ -32,11 +32,13 @@
   "assets": [
     {
       "id": "necklace",
+      "input": "image_3",
       "kind": "real_product",
       "fidelity": 2
     },
     {
       "id": "bracelet",
+      "input": "image_4",
       "kind": "real_product",
       "fidelity": 2
     }
