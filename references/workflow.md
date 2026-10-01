@@ -2,6 +2,36 @@
 
 这份文档只处理“什么时候做什么”。视觉参数读 [style-guide.md](style-guide.md)，跑图时读 [prompt-template.md](prompt-template.md)，验收清单读 [prompt-checklist.md](prompt-checklist.md)。
 
+## 0. 首次使用初始化（只执行一次）
+
+新用户第一次使用 Skill 时，先完成初始化，再进入文章工作流：
+
+```bash
+python3 tools/init.py
+```
+
+需要确认：
+
+- 人物身份：默认「秋秋」 / 替换为自己的真人身份图。
+- Lovart：使用 / 暂不配置。
+
+Lovart 密钥只由运行环境提供：
+
+```bash
+export LOVART_ACCESS_KEY="ak_..."
+export LOVART_SECRET_KEY="sk_..."
+```
+
+初始化配置只保存身份路径、provider、enabled 等非敏感信息到 `~/.qiuqiu-wechat-cover/config.json`，**绝不保存 Access Key / Secret Key**。
+
+检查状态：
+
+```bash
+python3 tools/init.py --check
+```
+
+如果已经初始化，不再重复询问；用户明确要求替换身份或重新配置 Lovart 时才重新运行。
+
 ## 输入清单
 
 | 项目 | 来源 | 必需性 | 处理方式 |
@@ -76,10 +106,11 @@ python3 tools/resolve_assets.py --data-uri
 
 用户明确“生成/跑图”后：
 
-1. 运行 `tools/resolve_assets.py`，确认图 1（身份）与图 2（风格）已真正可读。
-2. 按当前图像工具支持的方式注入 图 1 / 图 2，把当前任务素材（如有）编号为 图 3+。
-3. 用 [prompt-template.md](prompt-template.md) 组装提示词，写明每张图的角色、准确中文文案、布局和“不添加未授权文字”。
-4. 生成文件保存到项目目录之外；未指定保存目录时先询问。
+1. 检查初始化状态；未初始化先执行 `python3 tools/init.py`。
+2. 运行 `tools/resolve_assets.py`，确认图 1（身份）与图 2（风格）已真正可读。
+3. 按当前图像工具支持的方式注入 图 1 / 图 2，把当前任务素材（如有）编号为 图 3+。
+4. 用 [prompt-template.md](prompt-template.md) 组装提示词，写明每张图的角色、准确中文文案、布局和“不添加未授权文字”。
+5. 生成文件保存到项目目录之外；未指定保存目录时先询问。
 
 用户要求局部修改时，只改点名区域，其他区域一像素不动（编辑政策见 [prompt-checklist.md](prompt-checklist.md) 生成后部分与 [SKILL.md](../SKILL.md) 的新图与编辑模式）。
 
@@ -89,8 +120,8 @@ python3 tools/resolve_assets.py --data-uri
 
 ## 停止条件与恢复
 
-- **缺正文或路径不可读**：停止分析，要求文章。
-- **内置资产无法加载或注入**：按上文尝试失败后停止，说明是运行时能力限制。
+- **未初始化**：先完成身份与 Lovart 选择。\n- **缺正文或路径不可读**：停止分析，要求文章。
+- **Lovart 已启用但密钥缺失**：停止 Lovart 调用，要求配置环境变量，不保存到 Skill 文件。\n- **身份/风格资产无法加载或注入**：按上文尝试失败后停止，说明是运行时能力限制。
 - **缺必要真实素材**：说明缺哪张以及可用的文字名/留白替代，等待用户选择。
 - **文案未确认**：停在提案阶段。
 - **生成失败或验收不通过**：保留已确认文案和提示词，只调整失败项；下一轮仅重跑失败部分。
