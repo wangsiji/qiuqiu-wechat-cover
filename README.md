@@ -1,705 +1,448 @@
 <p align="center">
-  <img src="examples/cover-japan-12days.png" alt="qiuqiu-wechat-cover 示例封面" width="820"/>
+  <img src="examples/cover-japan-12days.png" alt="公众号封面示例" width="820"/>
 </p>
 
 <h1 align="center">qiuqiu-wechat-cover</h1>
 
-<p align="center"><b>把一篇公众号文章，稳定地变成一张统一的品牌封面</b></p>
-<p align="center">Article → Brief → Prompt → Generate → Validate → Retry</p>
-
-<p align="center">
-  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-  <a href=".github/workflows/validate.yml"><img alt="CI" src="https://img.shields.io/badge/CI-GitHub%20Actions-brightgreen.svg"></a>
-</p>
+<p align="center"><b>把你的公众号文章，直接交给 AI，生成统一、好看的公众号封面</b></p>
 
 ---
 
-## ✨ 这是什么
+## 👋 这是干什么的？
 
-**qiuqiu-wechat-cover** 是一个面向微信公众号封面制作的 Agent Skill。
+如果你平时写公众号，可能会遇到一个问题：
 
-它把「读文章 → 定文案 → 定人物 → 定素材 → 生成 → 验收 → 修正」整理成一套可重复执行的流程。
+> **文章写完了，封面怎么办？**
 
-它的目标不是让 AI 偶尔生成一张好看的图，而是：
+你可能会：
 
-> **连续做几十篇、上百篇封面，仍然保持人物、风格、文案和真实素材的一致性。**
+- 不知道封面写什么字
+- 每次生成出来的风格都不一样
+- 人物一会儿长这样，一会儿又变样
+- 产品照片被 AI 改得面目全非
+- 明明只想改一个地方，结果整张图都变了
+- 生成了很多张，却很难选出一张能直接用的
 
-核心链路：
+**qiuqiu-wechat-cover 就是帮你解决这些问题的。**
 
-```text
-公众号文章
-   ↓
-Cover Brief
-   ↓
-文案 / 人物 / 素材 / 构图锁定
-   ↓
-Prompt Compiler
-   ↓
-图像生成
-   ↓
-机器 + 人工 / 视觉验收
-   ↓
-PASS → 发布
-FAIL → Failure Patch → Retry
-```
+你不需要学习设计，也不需要学习 Prompt。
+
+你只需要把文章和图片交给智能体，然后告诉它：
+
+> **“帮我做这篇文章的公众号封面。”**
+
+剩下的事情，让 AI 来完成。
 
 ---
 
-## 🎯 适合谁
+# 🚀 最简单的使用方法
 
-### 如果你只是想使用
+## 第一步：把这个 Skill 安装到你的智能体
 
-你只需要：
+把这个项目安装到你使用的 AI Agent / 智能体中。
 
-1. 第一次运行初始化
-2. 提供文章
-3. 确认封面文案
-4. 提供需要保真的人物 / 产品 / Logo / 照片
-5. 让 Skill 完成生成与验收
+安装好以后，**不需要打开代码，也不需要自己运行命令。**
 
-**不需要先理解 JSON Schema、Prompt Compiler 或 F01～F10。**
-
-### 如果你要二次开发
-
-再去看：
-
-- `SKILL.md`
-- `references/`
-- `tools/`
-- `examples/`
+直接在智能体里使用即可。
 
 ---
 
-# 🚀 5 分钟开始
+## 第二步：第一次使用时，AI 会问你两个问题
 
-## 1. 获取 Skill
+第一次使用这个 Skill，智能体会先帮你完成一次简单设置。
 
-```bash
-git clone https://github.com/wangsiji/qiuqiu-wechat-cover.git
-cd qiuqiu-wechat-cover
-```
+### ① 你想用谁作为封面人物？
 
-如果你的 Agent 有自己的 Skill 目录，把整个目录放进去即可。
+你可以选择：
 
-例如：
+**使用默认人物**
 
-```bash
-cp -r . ~/.hermes/skills/qiuqiu-wechat-cover
-```
+适合直接使用这个项目自带的「秋秋」人物形象。
 
----
+或者：
 
-## 2. 第一次使用：先初始化
+**换成你自己的照片**
 
-第一次使用时运行：
+你只需要把一张人物照片发给智能体。
 
-```bash
-python3 tools/init.py
-```
+以后做封面时，AI 会尽量保持这个人物的脸型、五官、发型和整体身份一致。
 
-初始化只需要回答两个问题。
-
-### ① 人物身份
-
-```text
-1. 使用默认「秋秋」人物
-2. 换成我自己的身份图
-```
-
-如果选择自定义，可以指定：
-
-```bash
-python3 tools/init.py \
-  --identity custom \
-  --identity-path /path/to/identity.jpg
-```
-
-默认人物素材：
-
-```text
-references/assets/qiuqiu-face-reference.jpg
-```
-
-默认风格参考：
-
-```text
-references/assets/qiuqiu-style-reference.png
-```
-
-### ② 是否使用 Lovart
-
-```text
-1. 配置 Lovart
-2. 暂时跳过
-```
-
-也可以直接：
-
-```bash
-python3 tools/init.py --identity default --lovart yes
-```
-
-或者暂时不配置：
-
-```bash
-python3 tools/init.py --identity default --lovart no
-```
-
-查看当前初始化状态：
-
-```bash
-python3 tools/init.py --check
-```
-
-> **初始化只在首次使用时做。**
+> **这个设置只需要做一次。**
 >
-> 后续生成封面不需要反复询问人物和 API Key。
+> 以后不用每次重新上传人物照片。
 
 ---
 
-## 3. 配置 Lovart（可选）
+### ② 你要不要使用 Lovart 来生成图片？
 
-如果你选择 Lovart，需要配置：
+如果你的智能体已经连接了 Lovart，直接选择使用即可。
 
-```bash
-export LOVART_ACCESS_KEY="ak_..."
-export LOVART_SECRET_KEY="sk_..."
-```
+如果还没有配置，也可以先跳过。
 
-然后检查：
+**第一次使用时 AI 会告诉你需要做什么，不需要自己研究配置文件。**
 
-```bash
-python3 tools/init.py --check
-```
-
-### 🔐 安全规则
-
-API Key：
-
-- 只从环境变量读取
-- 不写入 `config.json`
-- 不写入 Git
-- 不写入 Prompt
-- 不写入日志
-
-**不要把真实 Key 放进 README、Brief、代码或仓库。**
+如果需要 API Key，**不要把 Key 发到聊天里，也不要写进 GitHub 仓库。**
 
 ---
 
-# 🧩 你真正需要准备什么
+# 📝 第三步：把文章交给 AI
 
-一次封面任务通常只需要四样东西：
+之后，你就可以像平时聊天一样使用。
 
-### 1. 文章
+例如直接说：
 
-最好提供完整正文，而不是只给标题。
+> **帮我给这篇公众号文章做一个封面。**
 
-### 2. 封面文案
+然后把文章发给智能体。
 
-Skill 会先提出候选文案，确认后才锁定。
+如果文章里有需要准确展示的东西，也一起发：
 
-最终画面允许出现的文字，只认：
-
-```json
-{
-  "copy": {
-    "status": "confirmed",
-    "allowed_text": [
-      "100件长期好物",
-      "戴了6年还在戴"
-    ]
-  }
-}
-```
-
-### 3. 人物 / 真实素材
-
-例如：
-
-- 真人身份图
+- 人物照片
 - 产品照片
 - Logo
 - 旅行照片
-- App / 网页截图
+- App 截图
+- 网页截图
 
-真实素材不是普通「参考图」，而是需要保护的输入资产。
+**不需要自己告诉 AI 应该怎么排版。**
 
-### 4. 文章主题
+---
+
+# ✏️ 第四步：AI 会先和你确认封面文字
+
+AI 不会一上来就直接生成。
+
+它会先帮你从文章里找到适合放在封面上的内容，并给你几个简单的方案。
 
 例如：
 
-- 产品 / 好物
-- 旅行
-- AI
-- 个人生活
-- 教程
-- 对比测评
+> **方案 A**
+>
+> 100件长期好物  
+> 戴了6年还在戴
 
-Skill 会根据主题选择合适的构图模板。
+你觉得可以，就告诉它：
 
----
+> **“就用这个。”**
 
-# 🔄 完整工作流
+然后 AI 才会开始生成。
 
-## Step 1：读文章
+这样可以避免一个很常见的问题：
 
-先提炼：
-
-- 文章真正主题
-- 核心卖点 / 信息
-- 最值得放到封面的内容
-- 必须出现的真实对象
-- 是否需要人物
-- 是否需要产品 / Logo / 照片
-
-**不确定的事实不猜。**
+> **图片生成好了，结果封面上的中文字写错了。**
 
 ---
 
-## Step 2：确定封面方案
+# 🎨 第五步：AI 自动处理设计
 
-先确定：
+确认以后，AI 会自动完成：
 
-1. 封面主题
-2. 短标题 / Hook
-3. 构图方向
-4. 需要哪些真实素材
+- 选择适合文章主题的构图
+- 安排标题位置
+- 使用统一的视觉风格
+- 保持人物形象
+- 保护产品、Logo 等真实素材
+- 控制封面比例
+- 检查有没有出现不应该出现的文字
 
-用户确认文案后，进入 Copy Lock。
+你不需要学习这些规则。
+
+**这些都是这个 Skill 内部负责的事情。**
 
 ---
 
-## Step 3：建立 Cover Brief
+# 🔍 第六步：生成以后，AI 还会自己检查
 
-Cover Brief 是这次任务的**单一事实源**。
+图片生成出来以后，不代表任务就结束了。
 
-它统一记录：
+AI 会继续检查：
 
-- 画布
-- 文章主题
-- 最终文案
-- 人物身份
-- 风格
+### 人物有没有变？
+
+比如你提供的是同一个人，AI 会检查有没有出现明显的换脸、脸型变化等问题。
+
+### 产品有没有被改掉？
+
+如果你提供了一双鞋、一件衣服、一个包，AI 会尽量保持它原本的外观，而不是重新“设计”一个。
+
+### Logo 有没有变形？
+
+Logo 属于需要高度准确的素材，会重点保护。
+
+### 文字有没有多出来？
+
+封面最终出现的文字，应该来自你确认过的内容。
+
+### 整体好不好看？
+
+还会检查：
+
 - 构图
-- 真实素材
-- 约束
-
-因此后面的 Prompt、生成和验收都围绕同一份 Brief。
-
-详细说明：
-
-- [references/cover-brief.md](references/cover-brief.md)
-- [references/cover-brief.schema.json](references/cover-brief.schema.json)
+- 层次
+- 明暗
+- 风格
+- 和文章主题是否匹配
 
 ---
 
-## Step 4：校验
+# 🔄 如果第一次不满意怎么办？
 
-```bash
-python3 tools/validate_brief.py examples/sample-brief.json
-```
+**不用重新从头开始。**
 
-不通过就不要进入生成阶段。
+你可以直接告诉 AI：
 
----
+> “人物脸变了。”
 
-## Step 5：编译 Prompt
+或者：
 
-```bash
-python3 tools/compile_prompt.py \
-  examples/sample-brief.json \
-  -o prompt.txt
-```
+> “产品变形了。”
 
-Prompt 会按照固定结构生成：
+或者：
 
-```text
-opener
-article
-copy
-ref_roles
-asset_fidelity
-style
-layout
-typography
-negative
-edit
-```
+> “标题太小了。”
 
----
+或者：
 
-## Step 6：检查真实素材
+> “整体太暗了。”
 
-```bash
-python3 tools/resolve_assets.py
-```
+AI 会根据你的反馈，只修改对应的问题。
 
-这一步确保 Skill 知道：
+例如：
 
-> **哪些图片是真正要传给生成模型的输入，而不是只在 Prompt 里写一句“参考图”。**
+**你说：**
+
+> 产品变形了，其他都保持不变。
+
+**AI 会尽量：**
+
+> 只加强产品保护，不重新改变人物、文字和整体构图。
+
+这就是这个 Skill 很重要的一点：
+
+> **哪里有问题，就改哪里。**
 
 ---
 
-## Step 7：生成
+# 🧠 为什么它比“直接让 AI 画一张图”更稳定？
 
-当前仓库提供 Lovart Agent 通道。
+因为这个 Skill 在后台帮你记住了几件重要的事情。
 
-具体 Lovart 使用方式见：
+### ① 记住你的视觉风格
 
-- [references/lovart-channel.md](references/lovart-channel.md)
+不会今天一个风格，明天又换一个风格。
 
----
+### ② 记住你的封面人物
 
-## Step 8：验收
+不会每篇文章都重新“猜”一次人物长什么样。
 
-先做机器检查：
+### ③ 记住哪些东西不能乱改
 
-```bash
-python3 tools/validate_output.py path/to/generated.png
-```
+例如：
 
-然后再进行视觉验收。
+- 产品
+- Logo
+- 人物
+- 旅行照片
 
-重点检查：
+### ④ 记住你确认过的文字
 
-- 2.35:1 比例
-- 中文是否逐字正确
-- 人物身份是否一致
-- 产品是否变形
-- Logo 是否失真
-- 真实照片是否被错误重绘
-- 构图是否清晰
-- 风格是否统一
-- 是否准确表达文章主题
+不会 AI 自己随便往封面上加字。
+
+### ⑤ 记住上一次哪里出了问题
+
+下一次修图时，可以针对问题继续优化。
 
 ---
 
-## Step 9：失败就分类修复
+# 🎯 你只需要负责三件事
 
-不要简单地「再生成一张」。
+整个过程中，你真正需要做的事情其实很少：
 
-先判断问题属于哪一类：
+### ① 提供文章
 
-| Code | 问题 |
-|---|---|
-| F01 | 人物身份漂移 |
-| F02 | 中文错字 / 多余文字 |
-| F03 | 产品变形 |
-| F04 | Logo 失真 |
-| F05 | 构图拥挤 / 比例失衡 |
-| F06 | 主题不明确 |
-| F07 | 画面过暗 |
-| F08 | 未授权文字 |
-| F09 | 比例错误 |
-| F10 | 风格漂移 |
+告诉 AI：
 
-例如产品变形：
+> “这是我要发布的文章。”
 
-```bash
-python3 tools/compile_prompt.py \
-  examples/sample-brief.json \
-  --failure F03 \
-  -o retry.txt
-```
+### ② 确认封面文字
 
-Failure Patch 的原则是：
+AI 给你几个方案，你选一个。
 
-```text
-保留原 Prompt
-     +
-只追加对应问题的修复指令
-     ↓
-重新生成
-```
+### ③ 最后看一眼
 
-这样可以尽量避免「修了产品，又把人物修坏」。
+如果满意：
 
-完整规则：
+> **“可以，用这张。”**
 
-- [references/failure-codes.md](references/failure-codes.md)
-- [references/failure-codes.json](references/failure-codes.json)
+如果不满意：
+
+> **“人物不对。”**
+
+> **“产品变形了。”**
+
+> **“标题再大一点。”**
+
+就这么简单。
 
 ---
 
-# 🎨 当前品牌基线
+# 📦 你可以用它做哪些封面？
 
-当前内置示例以「秋秋很开心」的视觉体系为基准：
+例如：
 
-| 项目 | 基线 |
-|---|---|
-| 比例 | **2.35:1** |
-| 推荐尺寸 | **1880×800** |
-| 主视觉 | 暖木色 × 复古像素 × 温馨工作台 |
-| 氛围 | 明亮、温暖、生活化 |
-| 人物 | 保持身份连续，不随意换脸 |
-| 产品 / Logo | 优先使用真实素材 |
-| 文案 | 最多 3 组，以 Copy Lock 为准 |
-| 构图 | L01～L05 |
-| 禁止 | 换脸、美颜、虚构产品、虚构 Logo、未经确认的文字 |
+- 🛍️ 好物推荐
+- ✈️ 旅行攻略
+- 👨‍👩‍👧 带娃 / 家庭生活
+- 🤖 AI 工具
+- 💻 效率工具
+- 📚 学习 / 阅读
+- 🏠 生活方式
+- 📱 App 推荐
+- 📊 对比测评
+- 📝 教程类文章
 
-具体规则不在 README 重复维护，统一放在：
-
-- [references/identity-contract.md](references/identity-contract.md)
-- [references/style-guide.md](references/style-guide.md)
-- [references/layout-system.md](references/layout-system.md)
-- [references/copy-contract.md](references/copy-contract.md)
-- [references/asset-contract.md](references/asset-contract.md)
+只要是公众号文章，都可以让它先帮你分析适合什么样的封面。
 
 ---
 
-# 🛠️ 常用命令
+# 👤 如果我是第一次使用，应该怎么说？
 
-### 初始化
+最简单的一句话：
 
-```bash
-python3 tools/init.py
-```
+> **“帮我给这篇公众号文章生成一个封面。”**
 
-### 查看初始化状态
+然后把文章发过去。
 
-```bash
-python3 tools/init.py --check
-```
+如果需要人物：
 
-### 检查 Skill
+> **“人物用我刚刚上传的这张照片。”**
 
-```bash
-python3 tools/validate_skill.py .
-```
+如果有产品：
 
-### 检查 Brief
+> **“这个产品必须保持原样。”**
 
-```bash
-python3 tools/validate_brief.py examples/sample-brief.json
-```
+如果你不喜欢第一次结果：
 
-### 编译 Prompt
+> **“人物变了，其他保持不变，再生成一次。”**
 
-```bash
-python3 tools/compile_prompt.py \
-  examples/sample-brief.json \
-  -o prompt.txt
-```
-
-### 生成失败后的定向修复
-
-```bash
-python3 tools/compile_prompt.py \
-  examples/sample-brief.json \
-  --failure F03 \
-  -o retry.txt
-```
-
-### 检查内置素材
-
-```bash
-python3 tools/resolve_assets.py
-```
-
-### 检查生成图片
-
-```bash
-python3 tools/validate_output.py path/to/generated.png
-```
+**你不需要告诉 AI 应该怎么写 Prompt。**
 
 ---
 
-# 🧪 测试
+# 🎨 默认封面风格
 
-本地完整检查：
+这个项目目前内置的是「秋秋很开心」的视觉体系：
 
-```bash
-python3 tools/validate_skill.py .
-python3 tools/validate_brief.py examples/sample-brief.json
-python3 tools/compile_prompt.py examples/sample-brief.json -o /tmp/sample-prompt.txt
-python3 tools/test_failure_patches.py
-python3 tools/test_init.py
-```
+- 暖木色
+- 复古像素
+- 温馨工作台
+- 明亮
+- 温暖
+- 生活化
 
-GitHub Actions 会自动验证：
+封面比例统一为 **2.35:1**，推荐尺寸 **1880 × 800**。
 
-- Skill 包结构
-- Sample Brief
-- Prompt 编译
-- F01～F10 Failure Patch
-- 首次初始化流程
-
-CI：
-
-- [.github/workflows/validate.yml](.github/workflows/validate.yml)
+如果你使用自己的账号，也可以根据自己的品牌重新设置人物、风格和素材规则。
 
 ---
 
-# 📁 项目结构
+# 🔐 关于隐私和 API Key
 
-```text
-qiuqiu-wechat-cover/
-│
-├── SKILL.md
-├── README.md
-├── LICENSE
-├── NOTICE
-│
-├── agents/
-│   └── openai.yaml
-│
-├── references/
-│   ├── workflow.md
-│   ├── cover-brief.md
-│   ├── cover-brief.schema.json
-│   ├── identity-contract.md
-│   ├── asset-contract.md
-│   ├── copy-contract.md
-│   ├── layout-system.md
-│   ├── style-guide.md
-│   ├── prompt-template.md
-│   ├── prompt-checklist.md
-│   ├── failure-codes.md
-│   ├── failure-codes.json
-│   ├── lovart-channel.md
-│   └── assets/
-│       ├── qiuqiu-face-reference.jpg
-│       └── qiuqiu-style-reference.png
-│
-├── tools/
-│   ├── init.py
-│   ├── test_init.py
-│   ├── resolve_assets.py
-│   ├── validate_skill.py
-│   ├── validate_brief.py
-│   ├── compile_prompt.py
-│   ├── validate_output.py
-│   ├── test_failure_patches.py
-│   └── lovart-agent.py
-│
-├── examples/
-│   ├── sample-brief.json
-│   └── ai-agent-cover.md
-│
-└── .github/
-    └── workflows/
-        └── validate.yml
-```
+如果使用图片生成服务，可能需要 API Key。
+
+请记住：
+
+> **API Key 是密码，不要直接发到聊天里。**
+
+这个 Skill 的设计原则是：
+
+- 不把 Key 写进仓库
+- 不把 Key 放进 README
+- 不把 Key 放进 Prompt
+- 不把 Key 暴露给其他人
+
+如果你的智能体需要配置 API Key，它会告诉你应该在哪里配置。
 
 ---
 
-# 📚 从哪里开始看
+# ❓ 常见问题
 
-### 只是使用
+### 我完全不会写代码，可以用吗？
 
-按这个顺序：
+**可以。**
 
-1. **README.md**
-2. **SKILL.md**
-3. **examples/sample-brief.json**
+如果你只是使用这个 Skill，正常情况下你不需要看代码。
 
-### 想修改视觉规则
-
-看：
-
-1. `references/identity-contract.md`
-2. `references/style-guide.md`
-3. `references/layout-system.md`
-4. `references/copy-contract.md`
-5. `references/asset-contract.md`
-
-### 想修改执行逻辑
-
-看：
-
-1. `tools/validate_brief.py`
-2. `tools/compile_prompt.py`
-3. `tools/validate_output.py`
-4. `tools/test_failure_patches.py`
-
-### 想更换图片生成后端
-
-保留：
-
-```text
-Cover Brief
-    +
-Brand Contracts
-    +
-Prompt Sections
-```
-
-只替换 / 新增后端 Adapter。
-
-**不要把品牌规则重新写进生成后端。**
+你只需要在智能体里聊天。
 
 ---
 
-# ❓ FAQ
+### 我不会写 Prompt，可以用吗？
 
-### 第一次使用一定要换人物吗？
+**可以。**
 
-不需要。
+Prompt 是这个 Skill 在后台帮你处理的。
 
-默认直接使用内置「秋秋」身份图；如果你做自己的账号，可以在初始化时选择自定义身份图。
-
-### 每次生成都要输入人物图吗？
-
-不需要重复配置。
-
-首次初始化后，人物身份会作为默认配置。
-
-### Lovart 是必须的吗？
-
-不是。
-
-Skill 的核心是 Brief、规则、Prompt 编译和验收体系。Lovart 是当前提供的图片生成通道之一。
-
-### API Key 会不会被保存到仓库？
-
-不会。
-
-Lovart Key 只从环境变量读取。
-
-### 为什么不直接写一个超长 Prompt？
-
-因为单个 Prompt 很难稳定解决：
-
-- 文案锁定
-- 人物身份
-- 真实素材保护
-- 构图约束
-- 失败后的局部修复
-- 回归测试
-
-所以这里把这些职责拆开：
-
-```text
-Brief
-Copy Lock
-Identity Contract
-Asset Contract
-Prompt Compiler
-Failure Patch
-Regression Test
-```
-
-### 为什么一定要先确认文案？
-
-因为图片模型生成中文字符并不可靠。
-
-这个 Skill 的策略是：
-
-> **先锁定允许出现的文字，再验收最终图片。**
-
-### 为什么真实产品要有 fidelity？
-
-因为「参考一下产品」和「必须保持这个产品真实外观」是两种不同的任务。
-
-fidelity 越高，对真实外观的保护要求越高。
+你只需要说你想要什么。
 
 ---
 
-# 📦 示例
+### 每次都要重新上传人物照片吗？
 
-- [examples/ai-agent-cover.md](examples/ai-agent-cover.md) — 完整案例
-- [examples/sample-brief.json](examples/sample-brief.json) — 最小 Brief
-- [examples/cover-japan-12days.png](examples/cover-japan-12days.png) — 实际封面示例
+**不需要。**
+
+第一次设置好以后，就作为默认人物使用。
+
+如果以后想换人物，再告诉智能体即可。
+
+---
+
+### 我可以使用自己的品牌风格吗？
+
+**可以。**
+
+这个项目并不限制你必须使用「秋秋很开心」的视觉。
+
+你可以替换：
+
+- 人物
+- 风格参考
+- Logo
+- 产品素材
+- 封面规则
+
+---
+
+### 如果 AI 第一次生成不好怎么办？
+
+直接告诉它哪里不好。
+
+例如：
+
+> “人物不像。”
+
+> “产品变形了。”
+
+> “标题太小。”
+
+> “颜色太暗。”
+
+> “这个构图太拥挤。”
+
+**不用自己重新描述一大堆要求。**
+
+---
+
+# 📚 如果你是开发者
+
+如果你想深入了解这个 Skill 的工作原理，再查看：
+
+- [SKILL.md](SKILL.md) — AI 智能体的执行规则
+- [references/](references/) — 详细设计规范
+- [tools/](tools/) — 自动化工具
+- [examples/](examples/) — 使用案例
+
+普通用户**不用看这些内容**。
 
 ---
 
@@ -707,10 +450,10 @@ fidelity 越高，对真实外观的保护要求越高。
 
 MIT。
 
-`tools/lovart-agent.py` 基于 [lovartai/lovart-skill](https://github.com/lovartai/lovart-skill)，具体归属见 [NOTICE](NOTICE)。
+本项目中的 `tools/lovart-agent.py` 基于 [lovartai/lovart-skill](https://github.com/lovartai/lovart-skill)，具体归属见 [NOTICE](NOTICE)。
 
 ---
 
 <p align="center">
-  <sub>qiuqiu-wechat-cover · 从「会生成图片」走向「可持续生产封面」</sub>
+  <sub>qiuqiu-wechat-cover · 不需要会设计，只需要把文章交给 AI</sub>
 </p>
