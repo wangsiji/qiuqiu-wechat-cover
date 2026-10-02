@@ -11,7 +11,6 @@
 
 </div>
 
----
 
 ## 这是什么
 
@@ -26,7 +25,15 @@
 
 一套仓库,反复出图,而不必每次重建品牌逻辑。
 
----
+## 案例
+
+同一套流程,可处理好物、生活方式、旅行等不同公众号题材。
+
+<p align="center">
+  <img src="examples/cover-case-01.jpg"        alt="好物封面"        width="40%"/>
+  <img src="examples/cover-case-02.jpg"        alt="生活方式封面"    width="40%"/>
+</p>
+
 
 ## 快速开始(60 秒上手)
 
@@ -143,17 +150,7 @@ python3 tools/validate_output.py out/xxx.png --expect-ratio 2.35   # 尺寸/比�
 
 ---
 
-## 案例
 
-同一套流程,可处理好物、生活方式、旅行等不同公众号题材。
-
-<p align="center">
-  <img src="examples/cover-case-01.jpg"        alt="好物封面"        width="30%"/>
-  <img src="examples/cover-case-02.jpg"        alt="生活方式封面"    width="30%"/>
-  <img src="examples/cover-japan-12days.png"   alt="日本十二日旅行"   width="30%"/>
-</p>
-
----
 
 ## 开发与验证
 
