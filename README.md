@@ -34,32 +34,23 @@
 </p>
 
 
-## 快速开始(60 秒上手)
+## 快速开始(30 秒)
 
-> 首次使用,先花 30 秒做一次 **启动配置**——确认两件事:人物身份、是否用 Lovart。之后不再问。
+**通过智能体安装(推荐,零命令行)。** 把本仓库交给你的智能体,一句话让它自己装好:
 
-```bash
-git clone https://github.com/wangsiji/qiuqiu-wechat-cover
-cd qiuqiu-wechat-cover
+> 把 `qiuqiu-wechat-cover` 装成封面技能,然后帮我确认人物身份和 Lovart 密钥。
 
-# ① 配图片后端(可选:不配也能先跑文案/校验部分)
-export LOVART_ACCESS_KEY="ak_..."      # 主 key
-export LOVART_SECRET_KEY="sk_..."
-export LOVART_BACKUP_ACCESS_KEY="ak_..."   # 备用 key(可选,可多把: BACKUP2/3/4)
-export LOVART_BACKUP_SECRET_KEY="sk_..."
+智能体会自动完成:加载仓库 → 跑 `tools/init.py` 引导(问你要人物身份 + Lovart 密钥)→ 之后随时可用。你不需要手动敲命令,也不用理解内部文件。Lovart 的 `access key` / `secret key` 放进智能体的 Secret / 环境变量即可,别贴到聊天里。
 
-# ② 启动配置:确认人物身份 + 是否用 Lovart
-python3 tools/init.py --identity default --lovart yes
-```
+> 会动手自己装的,几步也够:`git clone https://github.com/wangsiji/qiuqiu-wechat-cover` → `export LOVART_ACCESS_KEY="ak_..."  LOVART_SECRET_KEY="sk_..."` → `python3 tools/init.py --identity default --lovart yes`。
 
-然后,日常只需要一句:
+装好之后,日常就一句话:
 
 > 帮我把这篇公众号文章做一张封面。
 
-顺手把产品图 / 人物图 / 旅行照片丢进去也行;都不放也没关系,会走「内置身份 + 文字」方案。
-全部命令都应在仓库根目录运行。
+产品图 / 人物图 / 旅行照片可顺手放进;都不放,会走「内置身份 + 文字」方案。
 
-> 🔐 **密钥纪律**:`LOVART_*` 只存在于运行环境(env / Agent 的 Secret),绝不写入 `config.json`、Git 或聊天记录。
+> 🔐 **密钥纪律**:`LOVART_*` 只从环境变量读取,绝不写入 `config.json`、Git 或聊天记录。
 
 
 ## 封面是怎么出来的
