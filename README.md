@@ -5,7 +5,6 @@
 **让公众号文章,拥有品牌级封面。**
 
 从「读文章 → 提钩子 → 出图 → 逐轮改」的一条可复用封面工作流。
-纯 Python 标准库的独立 CLI,不绑定任何 Agent 平台。
 
 **零第三方依赖 · MIT License · 2.35:1 专用横版**
 
@@ -62,7 +61,6 @@ python3 tools/init.py --identity default --lovart yes
 
 > 🔐 **密钥纪律**:`LOVART_*` 只存在于运行环境(env / Agent 的 Secret),绝不写入 `config.json`、Git 或聊天记录。
 
----
 
 ## 封面是怎么出来的
 
@@ -77,7 +75,6 @@ python3 tools/init.py --identity default --lovart yes
 
 未通过,下一轮**只修对应项**,已批准的文案和 Prompt 不动。
 
----
 
 ## 架构
 
@@ -101,7 +98,6 @@ Cover Brief  ──▶ Prompt ──▶ 图后端 ──▶ 封面
 文案锁定        内置资产注入  机器 + 人工验收
 ```
 
----
 
 ## 不使用 Agent 的纯命令行用法
 
@@ -129,7 +125,6 @@ python3 tools/validate_output.py out/xxx.png --expect-ratio 2.35   # 尺寸/比�
 
 > 想接别的图后端?`resolve_assets.py` 能把内置参考图导出为 `data URI` 或绝对路径,喂给任意能收图的 API(Stable Diffusion / Gemini / MiniMax…)。品牌逻辑固化在仓库,**不绑定 Lovart**。
 
----
 
 ## 目录结构
 
@@ -148,8 +143,6 @@ python3 tools/validate_output.py out/xxx.png --expect-ratio 2.35   # 尺寸/比�
 └── agents/                  # Agent 约定
 ```
 
----
-
 
 
 ## 开发与验证
@@ -162,7 +155,6 @@ python3 tools/test_init.py               # 首次引导回归
 
 以上已接入 CI(`.github/workflows/validate.yml`),每次 push 自动跑。
 
----
 
 ## 学习路径
 
