@@ -8,7 +8,7 @@
 
 ---
 
-## Examples
+## 案例
 
 同一套方法，可以用于好物、生活方式、旅行等不同类型的公众号内容。
 
@@ -20,11 +20,11 @@
 
 ---
 
-## Core Capabilities
+## 核心能力
 
 - **文章理解** —— 从正文提炼主题、点击钩子与真实主体，而不是拿到就生成。
 - **文案锁定（Copy Lock）** —— 生成前先确认封面标题，`copy.allowed_text` 是唯一文本真相源，杜绝「图对了、字不对、字被改」。
-- **真实素材保护** —— 人物与产品图保持原样，不做不必要的重绘或变形；缺素材就 fail-closed，不编造。
+- **真实素材保护** —— 人物与产品图保持原样，不做不必要的重绘或变形；缺素材就自动停止，不编造。
 - **统一视觉身份** —— 内置品牌资产（身份图 + 风格图 + 版式模板），也允许一键替换为自有品牌。
 - **阶段校验** —— 每一步都有检查点（brief 校验、prompt 编译、输出机器验收、人工终检），而不是等最终出图兜底。
 - **最小变更** —— 局部修改 / 修复（删除一句话、换 Logo、调脸）只动点名区域，不推翻重来。
@@ -32,7 +32,7 @@
 
 ---
 
-## Quick Start（框架无关，不用 Hermes）
+## 快速开始（框架无关，不用 Hermes）
 
 > 首次使用会先跑一次**启动配置**，确认两个问题就完事，之后不再重复询问。
 
@@ -60,7 +60,7 @@ python3 tools/init.py --identity default --lovart yes
 
 ---
 
-## Production Pipeline
+## 生产链路
 
 封面不是一步生成的，而是分阶段完成、每阶段可验收：
 
@@ -75,14 +75,14 @@ python3 tools/init.py --identity default --lovart yes
 
 ---
 
-## Architecture
+## 架构
 
 把每次任务拆成可复用的层次：
 
 | 层次 | 职责 |
 | --- | --- |
 | Agent 交互层 | 收集、确认、回报（你用什么 agent 都行） |
-| Workflow 层 | 内容理解 → 提案 → 生成 → 验收 |
+| 流程层 | 内容理解 → 提案 → 生成 → 验收 |
 | 资产层 | 内置身份图 + 风格图 + 本次素材 |
 | 生成层 | Lovart Agent Channel（默认） |
 | 质检层 | Brief 校验、Prompt 编译、输出机器验收、人工终检 |
@@ -119,7 +119,7 @@ python3 tools/validate_output.py out/xxx.png --expect-ratio 2.35   # 尺寸/比�
 
 ---
 
-## Project Structure
+## 目录结构
 
 ```text
 .
@@ -148,7 +148,7 @@ python3 tools/validate_output.py out/xxx.png --expect-ratio 2.35   # 尺寸/比�
 
 ---
 
-## Security
+## 安全
 
 - Lovart API Key 只从环境变量读取，从不落盘、不写库、不回显。
 - 自带的身份 / 风格素材是本 Skill 的隐私边界：不检索外部人物，不替换默认形象。
@@ -156,7 +156,7 @@ python3 tools/validate_output.py out/xxx.png --expect-ratio 2.35   # 尺寸/比�
 
 ---
 
-## Development
+## 开发
 
 ```bash
 python3 tools/validate_skill.py          # 完整性 + 链接 + 必需文件
@@ -168,16 +168,16 @@ CI 已把上面的都接线进 `.github/workflows/validate.yml`，每次 push �
 
 ---
 
-## Documentation
+## 文档导航
 
 一套仓库，几层读者：
 
-- **想直接用**：看上面的 **Quick Start**。
+- **想直接用**：看上面的 **快速开始**。
 - **想了解内部**：`SKILL.md` → `references/workflow.md` → `references/style-guide.md`。
 - **想扩展 / 换后端**：`tools/compile_prompt.py` + `references/prompt-template.md` 是起点,`references/lovart-channel.md` 是出图通道细节。
 
 ---
 
-## License
+## 许可
 
 本项目采用 MIT License。其中 `tools/lovart-agent.py` 基于 [lovartai/lovart-skill](https://github.com/lovartai/lovart-skill)，具体归属见 NOTICE。
